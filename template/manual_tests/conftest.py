@@ -8,24 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from template_package.core.example import ExampleClass, ExampleConfig
-from template_package.utils.logging_config import set_log_level
-
-
-@pytest.fixture
-def example_config() -> ExampleConfig:
-    """Create a test configuration."""
-    return ExampleConfig(
-        name="test",
-        max_items=10,
-        enable_validation=True,
-    )
-
-
-@pytest.fixture
-def example_instance(example_config: ExampleConfig) -> ExampleClass:
-    """Create a test ExampleClass instance."""
-    return ExampleClass(example_config)
 
 
 @pytest.fixture
