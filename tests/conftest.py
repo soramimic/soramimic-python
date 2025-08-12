@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 
+
 @pytest.fixture
 def sample_data() -> list[dict[str, Any]]:
     """Create sample data for testing."""
