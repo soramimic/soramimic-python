@@ -1,5 +1,6 @@
-# -*- coding: utf-8 -*-
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
+
 from .character import TokenFormatter
 
 
@@ -36,14 +37,14 @@ class TextAnalyzer:
     @staticmethod
     def hira_to_kata(s: str) -> str:
         return "".join(
-            chr(ord(ch) + 0x60) if "\u3041" <= ch <= "\u3096" else ch
-            for ch in s
+            chr(ord(ch) + 0x60) if "\u3041" <= ch <= "\u3096" else ch for ch in s
         )
 
     @staticmethod
     def remove_sign(s: str) -> str:
         # 記号削除用の簡易版（必要に応じて正規表現強化）
         import re
+
         return re.sub(r"[^\wぁ-ゔァ-ヴー一-龠]", "", s)
 
     @staticmethod
@@ -66,7 +67,9 @@ class TextAnalyzer:
 
             # 漢字の処理
             for token in tokens:
-                if token["pronunciation"] == "*" and self.kanji.is_fullmatch(token["surface_form"]):
+                if token["pronunciation"] == "*" and self.kanji.is_fullmatch(
+                    token["surface_form"]
+                ):
                     p = self.kanji.to_kana(token["surface_form"])
                     if p:
                         token["pronunciation"] = p
@@ -77,16 +80,21 @@ class TextAnalyzer:
                     continue
                 s = self.remove_sign(token["surface_form"])
                 s = self.hira_to_kata(s)
-                if all("\u30a1" <= ch <= "\u30f6" or "\u3000" <= ch <= "\u301c" or "\u30fb" <= ch <= "\u30fe" for ch in s):
+                if all(
+                    "\u30a1" <= ch <= "\u30f6"
+                    or "\u3000" <= ch <= "\u301c"
+                    or "\u30fb" <= ch <= "\u30fe"
+                    for ch in s
+                ):
                     token["pronunciation"] = s
 
-            tokens = self.tf.format(tokens)
+            formatted_tokens = self.tf.format(tokens)
 
-            for token in tokens:
+            for token in formatted_tokens:
                 if token["pronunciation"] == "*":
                     token["pos"] = "記号"
 
-            processed_list.append(tokens)
+            processed_list.append(formatted_tokens)
 
         return processed_list
 
@@ -96,6 +104,7 @@ class TextAnalyzer:
 
     def format_kana(self, text: str) -> str:
         import re
+
         def repl(match):
             return self.english.toKana(match.group(0))
 
@@ -121,10 +130,22 @@ class TextAnalyzer:
                 mora_tokens[-1]["pronunciation"] += token["pronunciation"]
         return mora_tokens
 
-    def get_yomi_and_phrase_break(self, tokens: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def get_yomi_and_phrase_break(
+        self, tokens: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         tokens = self.character.tokenize(tokens)
         tokens = [
-            {k: token[k] for k in ["surface_form", "token_index", "phrase", "pronunciation", "subword", "char_index"]}
+            {
+                k: token[k]
+                for k in [
+                    "surface_form",
+                    "token_index",
+                    "phrase",
+                    "pronunciation",
+                    "subword",
+                    "char_index",
+                ]
+            }
             for token in tokens
         ]
         # subword -> カナ配列

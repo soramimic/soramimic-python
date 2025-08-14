@@ -388,9 +388,14 @@ class Allocator:
             logger.error(f"Error during text allocation: {e}", exc_info=True)
             raise
 
+
 if __name__ == "__main__":
     # Example usage
     logging.basicConfig(level=logging.DEBUG)
     allocator = Allocator()
 
-    print(allocator.find_correspondence("馴れ初め", "なれそめ", lambda x: {"馴":"な", "初": "そ"}.get(x, x)))
+    print(
+        allocator.find_correspondence(
+            "馴れ初め", "なれそめ", lambda x: {"馴": "な", "初": "そ"}.get(x, x)
+        )
+    )

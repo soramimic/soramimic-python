@@ -11,6 +11,7 @@ class Apostrophe:
     - include:  プレースホルダを含むか
     - format:   全角風の ’ を ' に正規化
     """
+
     STRING_APOSTROPHE = "APOSTROPHE"
 
     def to_string(self, text: str) -> str:
@@ -49,6 +50,7 @@ class English:
         def conv(m):
             ch = m.group(0)
             return chr(ord(ch) - 65248)
+
         return re.sub(r"[Ａ-Ｚａ-ｚ]", conv, text)
 
     def _roman_to_kana(self, text: str, tree: dict[str, Any]) -> str:
@@ -60,7 +62,7 @@ class English:
         """
         s_lower = text.lower()
         result = ""
-        tmp = ""          # 途中まで積んだ元のケースの文字列
+        tmp = ""  # 途中まで積んだ元のケースの文字列
         index = 0
         node = tree
 
@@ -89,9 +91,9 @@ class English:
 
                 # ここに来たら現在の node では一致しない
                 prev = s_lower[index - 1] if index > 0 else ""
-                if prev and (prev == 'n' or prev == ch_low):
+                if prev and prev in ("n", ch_low):
                     # 促音 or 'n'
-                    push('ン' if prev == 'n' else 'ッ', to_root=False)
+                    push("ン" if prev == "n" else "ッ", to_root=False)
 
                 # いったん仕切り直し（ルートに戻して再解釈）
                 if node is not tree and ch_low in tree:
@@ -122,7 +124,9 @@ class English:
                     t = t.replace(v, dictionary[v])
         return t
 
-    def _english_to_kana(self, text: str, dictionary: dict[str, str], tree: dict[str, Any]) -> str:
+    def _english_to_kana(
+        self, text: str, dictionary: dict[str, str], tree: dict[str, Any]
+    ) -> str:
         t = self._zenkaku_english_to_hankaku(text)
         t = self._english_word_to_kana(t, dictionary)
         t = self._roman_to_kana(t, tree)
@@ -157,16 +161,14 @@ class English:
 
     def to_kana(self, text: str) -> str:
         return self._english_to_kana(text, self.DICTIONARY, self.TREE)
-    
+
+
 if __name__ == "__main__":
     # Example usage
-    english_dict = {
-        "HELLO": "ハロー",
-        "WORLD": "ワールド"
-    }
+    english_dict = {"HELLO": "ハロー", "WORLD": "ワールド"}
     roman_tree = {
         "h": {"e": {"l": {"l": {"o": "ハロー"}}}},
-        "w": {"o": {"r": {"l": {"d": "ワールド"}}}}
+        "w": {"o": {"r": {"l": {"d": "ワールド"}}}},
     }
     english = English(english_dict, roman_tree)
 

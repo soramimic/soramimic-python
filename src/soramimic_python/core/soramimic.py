@@ -37,10 +37,10 @@ class SoramimiMaker:
             candidates.setdefault(len(c), []).append(c)
 
         words = {}
-        for i in candidates:
+        for i, candidate_list in candidates.items():
             for w in word_list[i]:
                 w["sim"] = float("inf")
-                for c in candidates[i]:
+                for c in candidate_list:
                     d = (
                         self._ld(c, w["pronunciation"], kana_dist)
                         / int(i)
@@ -138,7 +138,7 @@ class SoramimiMaker:
                 new_word["period"] = [i, t]
 
                 new_score = prev_score + new_word["score"] + words_num
-                new_words = prev_words + [new_word]
+                new_words = [*prev_words, new_word]
                 results.append([new_score, new_words])
 
             if not results:

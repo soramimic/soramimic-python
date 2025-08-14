@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 class Parser:
@@ -16,9 +16,9 @@ class Parser:
     @staticmethod
     def _tokenize(query_str: str) -> list[str]:
         # '!=', '=', '(', ')' を前後にスペース → ホワイトスペース split
-        s = re.sub(r'(!=|=|\(|\))', r' \1 ', query_str)
+        s = re.sub(r"(!=|=|\(|\))", r" \1 ", query_str)
         s = s.strip()
-        return re.split(r'\s+', s) if s else []
+        return re.split(r"\s+", s) if s else []
 
     def _expression(
         self,
@@ -46,9 +46,9 @@ class Parser:
             assert isinstance(r2, tuple), "r2 should be tuple when not -1"
             right, i = r2
             if query[i - 1] == "or":
-                result = (bool(result) or bool(right))
+                result = bool(result) or bool(right)
             else:
-                result = (bool(result) and bool(right))
+                result = bool(result) and bool(right)
 
         return bool(result), i
 
@@ -185,7 +185,9 @@ class WordList:
         return header, df
 
     # ---- tidy CSV text loader ----
-    def parseTidy(self, csv_text: str, where: str = "") -> dict[int, list[dict[str, Any]]]:
+    def parseTidy(
+        self, csv_text: str, where: str = ""
+    ) -> dict[int, list[dict[str, Any]]]:
         """
         JS: loadDatabaseCsvText(text, query_str)
         """
@@ -210,7 +212,9 @@ class WordList:
             pronunciations.append(p)
 
         # かな推定（漢字を含む行だけ個別に get_yomi を呼び出し）
-        kanji_indices: list[int] = [i for i, p in enumerate(pronunciations) if self._has_kanji(p)]
+        kanji_indices: list[int] = [
+            i for i, p in enumerate(pronunciations) if self._has_kanji(p)
+        ]
         if kanji_indices:
             # 各文字列に対して個別にget_yomiを呼び出し
             for idx in kanji_indices:
@@ -233,13 +237,15 @@ class WordList:
             pvars = self.text_analyzer.yomi_to_variation(kana_norm)
             for p in pvars:
                 L = len(p)
-                resultdb.setdefault(L, []).append({
-                    "surface": obj.get("surface", ""),
-                    "pronunciation": p,
-                    "kana": kana_norm,
-                    "id": obj.get("id", str(i)),
-                    "original": obj.get("original", obj.get("surface", "")),
-                })
+                resultdb.setdefault(L, []).append(
+                    {
+                        "surface": obj.get("surface", ""),
+                        "pronunciation": p,
+                        "kana": kana_norm,
+                        "id": obj.get("id", str(i)),
+                        "original": obj.get("original", obj.get("surface", "")),
+                    }
+                )
 
         return resultdb
 
@@ -257,7 +263,7 @@ class WordList:
         lines = re.split(r"\r\n|\n", plain_text)
         # コメント除去・ゼロ幅スペース除去
         lines = [re.sub(r"#.*$", "", ln) for ln in lines]
-        lines = [ln.replace("\u200B", "") for ln in lines]
+        lines = [ln.replace("\u200b", "") for ln in lines]
         # カンマ分割
         parts = [ln.split(",") for ln in lines]
         # 無効行除去
@@ -271,9 +277,9 @@ class WordList:
             else:
                 title = row[0].strip()
                 for cand in row[1:]:
-                    cand = cand.strip()
-                    if cand:
-                        csv_rows.append([str(i), title, cand, cand])
+                    cand_stripped = cand.strip()
+                    if cand_stripped:
+                        csv_rows.append([str(i), title, cand_stripped, cand_stripped])
 
         # join
         out_lines = [",".join(header)]

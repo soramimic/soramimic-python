@@ -48,3 +48,7 @@ coverage.xml
 .secrets.baseline
 
 bep-eng.json
+words_tidy
+words
+wordsFormatted
+data

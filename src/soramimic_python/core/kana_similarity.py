@@ -6,9 +6,8 @@ import copy
 import logging
 
 from soramimic_python.core.kana_to_syllable import KanaConverter
+
 logger = logging.getLogger(__name__)
-
-
 
 
 class KanaSimilarity:
