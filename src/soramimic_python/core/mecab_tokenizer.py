@@ -17,7 +17,7 @@ class MeCabTokenizer:
         # MeCabのオプション設定
         # 出力フォーマット: 表層形\t品詞,品詞細分類1,品詞細分類2,品詞細分類3,
         # 活用型,活用形,原形,読み,発音
-        mecab_args = "-Ochasen"
+        mecab_args = ""  # ipadic形式（デフォルト）
         if dictionary_path:
             mecab_args += f" -d {dictionary_path}"
 
@@ -55,31 +55,40 @@ class MeCabTokenizer:
             if line == "EOS" or not line.strip():
                 continue
 
-            # chasen形式の解析: 表層形\t読み\t原形\t品詞-品詞細分類1-品詞細分類2...
+            # ipadic形式の解析: 表層形\t品詞,品詞細分類1,品詞細分類2,品詞細分類3,活用型,活用形,原形,読み,発音
             parts = line.split("\t")
-            if len(parts) < 4:
+            if len(parts) < 2:
                 continue
 
             surface = parts[0]
-            reading = parts[1] if len(parts) > 1 else surface
-            basic_form = parts[2] if len(parts) > 2 else surface
-            pos_info = parts[3] if len(parts) > 3 else ""
+            features = parts[1].split(",") if len(parts) > 1 else []
 
-            # 品詞情報をハイフンで分割
-            pos_parts = pos_info.split("-") if pos_info else []
+            # 各フィールドを取得（不足分は空文字）
+            part_of_speech = features[0] if len(features) > 0 else "未知"
+            part_of_speech_level_1 = features[1] if len(features) > 1 else ""
+            part_of_speech_level_2 = features[2] if len(features) > 2 else ""
+            part_of_speech_level_3 = features[3] if len(features) > 3 else ""
+            conjugation_type = features[4] if len(features) > 4 else ""
+            conjugation_form = features[5] if len(features) > 5 else ""
+            basic_form = features[6] if len(features) > 6 else surface
+            reading = features[7] if len(features) > 7 else surface
+            pronunciation = features[8] if len(features) > 8 else reading
+
+            if pronunciation == "ヲ":
+                pronunciation = "オ"
 
             # Kuromoji風の形式に変換
             token = {
                 "surface_form": surface,
-                "part_of_speech": pos_parts[0] if len(pos_parts) > 0 else "未知",
-                "part_of_speech_level_1": pos_parts[1] if len(pos_parts) > 1 else "",
-                "part_of_speech_level_2": pos_parts[2] if len(pos_parts) > 2 else "",
-                "part_of_speech_level_3": pos_parts[3] if len(pos_parts) > 3 else "",
-                "conjugation_type": parts[4] if len(parts) > 4 else "",
-                "conjugation_form": parts[5] if len(parts) > 5 else "",
+                "part_of_speech": part_of_speech,
+                "part_of_speech_level_1": part_of_speech_level_1,
+                "part_of_speech_level_2": part_of_speech_level_2,
+                "part_of_speech_level_3": part_of_speech_level_3,
+                "conjugation_type": conjugation_type,
+                "conjugation_form": conjugation_form,
                 "basic_form": basic_form,
                 "reading": reading,
-                "pronunciation": reading,  # chasenでは読みと発音は同じ
+                "pronunciation": pronunciation,
             }
 
             tokens.append(token)
@@ -111,3 +120,8 @@ class MeCabTokenizer:
             else:
                 result += char
         return result
+
+if __name__ == "__main__":
+    tokenizer = MeCabTokenizer()
+    text = "どこへ？"
+    print(tokenizer.tokenize(text))

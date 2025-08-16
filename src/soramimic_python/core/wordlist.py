@@ -145,8 +145,8 @@ class Parser:
 class WordList:
     """
     JS WordList(textAnalyzer) を Python へ移植。
-    - parseTidy: tidy CSV テキストと where 句（任意）を受けて {長さ: [語…]} を返す
-    - parsePlain: プレーンテキストを CSV に変換してから同上
+    - parse_tidy: tidy CSV テキストと where 句（任意）を受けて {長さ: [語…]} を返す
+    - parse_plain: プレーンテキストを CSV に変換してから同上
     語オブジェクトの形:
       {
         "surface": <表層>,
@@ -185,7 +185,7 @@ class WordList:
         return header, df
 
     # ---- tidy CSV text loader ----
-    def parseTidy(
+    def parse_tidy(
         self, csv_text: str, where: str = ""
     ) -> dict[int, list[dict[str, Any]]]:
         """
@@ -286,10 +286,10 @@ class WordList:
         out_lines += [",".join(r) for r in csv_rows]
         return "\n".join(out_lines)
 
-    def parsePlain(self, text: str) -> dict[int, list[dict[str, Any]]]:
+    def parse_plain(self, text: str) -> dict[int, list[dict[str, Any]]]:
         """
         JS loadDatabaseText(text) の簡潔版:
-        - プレーンを CSV にしてから parseTidy を適用
+        - プレーンを CSV にしてから parse_tidy を適用
         """
         csv_text = self._plain_to_csv(text)
-        return self.parseTidy(csv_text, where="")
+        return self.parse_tidy(csv_text, where="")

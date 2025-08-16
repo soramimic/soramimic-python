@@ -139,7 +139,7 @@ class TokenFormatter:
         tokens = self._set_number_pronunciation(tokens)
         # tokens = self._set_unknown_word_pronunciation(tokens)
         # 元コードではコメントアウト
-        tokens = self._set_kana_pronunciation(tokens)
+        # tokens = self._set_kana_pronunciation(tokens)
         tokens = self._concat_single_bar(tokens)
         tokens = self._concat_small_kana(tokens)
         tokens = self._set_phrase_index(tokens)

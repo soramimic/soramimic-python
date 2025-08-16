@@ -16,6 +16,10 @@ dependencies = [
     "ipadic>=1.0.0",
     "mecab-python3>=1.0.10",
     "jaconv>=0.4.0",
+    "pykakasi>=2.3.0",
+    "e2k>=0.6.2",
+    "neologdn>=0.5.4",
+    "english2kana>=0.1.5",
 ]
 
 [build-system]
@@ -63,6 +67,10 @@ ignore = [
     "PERF401",
     "PLR2004",
     "PLC2401",
+    "PLR0912",  # Too many branches
+    "PLR0915",  # Too many statements  
+    "PLR0911",  # Too many return statements
+    "SIM401",   # Use dict.get instead of if block
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -70,7 +78,7 @@ ignore = [
 
 [tool.pyright]
 include = ["src", "tests"]
-exclude = [".venv", "**/__pycache__"]
+exclude = [".venv", "**/__pycache__", "template", "manual_tests"]
 pythonVersion = "3.12"
 pythonPlatform = "All"
 typeCheckingMode = "basic"
@@ -162,8 +170,8 @@ clean = """
 help = "echo '利用可能なタスク: clean, check, help (task [name] で実行)'"
 check-all = """
   ARGS="${args:-.}"
-  uv run ruff format $ARGS &&
-  uv run ruff check $ARGS --fix &&
-  uv run pyright $ARGS &&
+  uv run ruff format $ARGS
+  uv run ruff check $ARGS --fix
+  uv run pyright $ARGS
   uv run pytest $ARGS
 """

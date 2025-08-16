@@ -9,7 +9,7 @@ nations_path = words_tidy_dir / "nations.csv"
 
 with nations_path.open() as f:
     csv_text = f.read()
-nation_words = wordlist.parseTidy(csv_text)
+nation_words = wordlist.parse_tidy(csv_text)
 
 
 # print(nation_words)

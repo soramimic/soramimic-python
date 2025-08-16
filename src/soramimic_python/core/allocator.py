@@ -86,7 +86,7 @@ class Allocator:
         return str_result
 
     @staticmethod
-    def _type_of(obj: Any) -> str:  # noqa: PLR0911
+    def _type_of(obj: Any) -> str:
         """
         Get the type of an object as a string.
 
@@ -112,7 +112,7 @@ class Allocator:
             return type(obj).__name__.lower()
 
     @classmethod
-    def _is_same_object(cls, object1: Any, object2: Any) -> bool:  # noqa: PLR0911
+    def _is_same_object(cls, object1: Any, object2: Any) -> bool:
         """
         Deep comparison of two objects.
 
@@ -259,7 +259,7 @@ class Allocator:
 
         memo = self._Memo()
 
-        def dp(  # noqa: PLR0912
+        def dp(
             s1: int, l1: int, s2: int, l2: int
         ) -> tuple[float, list[tuple[int, int, int, int]]]:
             """Dynamic programming function for finding optimal alignment."""

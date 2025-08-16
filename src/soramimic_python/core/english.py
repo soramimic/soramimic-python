@@ -1,5 +1,11 @@
 import re
 from typing import Any
+import jaconv
+from e2k import C2K, NGram
+import neologdn
+
+c2k = C2K()
+ngram = NGram()
 
 
 class Apostrophe:
@@ -127,11 +133,15 @@ class English:
     def _english_to_kana(
         self, text: str, dictionary: dict[str, str], tree: dict[str, Any]
     ) -> str:
-        t = self._zenkaku_english_to_hankaku(text)
-        t = self._english_word_to_kana(t, dictionary)
-        t = self._roman_to_kana(t, tree)
-        t = self._alphabet_to_kana(t, dictionary)
-        return t
+        #t = self._zenkaku_english_to_hankaku(text)
+        t = neologdn.normalize(text)
+        #t = self._english_word_to_kana(t, dictionary)
+        #t = self._roman_to_kana(t, tree)
+        #t = self._alphabet_to_kana(t, dictionary)
+        if ngram(t):
+            return c2k(t)
+        else:
+            return ngram.as_is(t)
 
     def is_fullmatch(self, text: str) -> bool:
         return re.fullmatch(r"[a-zA-Z']+", text) is not None
@@ -173,6 +183,6 @@ if __name__ == "__main__":
     english = English(english_dict, roman_tree)
 
     text = "Hello World"
-    tokens = english.tokenize(text)
+    tokens = english._tokenize(text)
     for token in tokens:
         print(token)

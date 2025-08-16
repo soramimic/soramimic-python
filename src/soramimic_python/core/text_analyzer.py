@@ -63,11 +63,11 @@ class TextAnalyzer:
             for token in tokens:
                 if self.english.is_fullmatch(token["surface_form"]):
                     token["surface_form"] = AP.to_sign(token["surface_form"])
-                    token["pronunciation"] = self.english.toKana(token["surface_form"])
+                    token["pronunciation"] = self.english.to_kana(token["surface_form"])
 
             # 漢字の処理
             for token in tokens:
-                if token["pronunciation"] == "*" and self.kanji.is_fullmatch(
+                if token["pronunciation"] == "*" and self.kanji._is_fullmatch(
                     token["surface_form"]
                 ):
                     p = self.kanji.to_kana(token["surface_form"])
