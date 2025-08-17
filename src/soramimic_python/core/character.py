@@ -1,16 +1,12 @@
 import re
 from typing import Any
-
+import jaconv
 
 # ========= TokenFormatter =========
 class TokenFormatter:
     # ひらがな→カタカナ
     def _hira_to_kata(self, s: str) -> str:
-        def conv(m):
-            code = ord(m.group(0)) + 0x60
-            return chr(code)
-
-        return re.sub(r"[\u3041-\u3096]", conv, s)
+        return jaconv.hira2kata(s)
 
     def _remove_sign_pronunciation(
         self, tokens: list[dict[str, str]]
