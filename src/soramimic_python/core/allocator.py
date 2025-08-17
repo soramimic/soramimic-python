@@ -1,7 +1,22 @@
 """
 Allocator module for text correspondence calculation.
 
-This module provides functionality to find optimal text correspondences
+This module provides functional        # 型が異なる場合は False
+        if type(object1) is not type(object2):
+            return False
+
+        # プリミティブ型は直接比較
+        if isinstance(object1, type(None) | bool | int | float | str):
+            return object1 == object2
+
+        # リスト（配列）の比較
+        elif isinstance(object1, list):
+            if len(object1) != len(object2):
+                return False
+            return all(
+                cls._is_same_object(item1, item2)
+                for item1, item2 in zip(object1, object2, strict=True)
+            )mal text correspondences
 using dynamic programming approach.
 """
 
@@ -24,37 +39,6 @@ class Allocator:
     def __init__(self) -> None:
         """Initialize the Allocator instance."""
         logger.debug("Allocator instance created")
-
-    @staticmethod
-    def _get_min(
-        array: list[tuple[float, Any]], get_value: Callable[[tuple[float, Any]], float]
-    ) -> tuple[float, Any]:
-        """
-        Get the minimum element from array based on get_value function.
-
-        Args:
-            array: List of tuples containing scores and data
-            get_value: Function to extract comparison value
-
-        Returns:
-            The tuple with minimum value
-
-        Raises:
-            ValueError: If array is empty
-        """
-        if not array:
-            raise ValueError("Cannot find minimum of empty array")
-
-        logger.debug(f"Finding minimum from {len(array)} elements")
-        min_val = float("inf")
-        content = array[0]  # Initialize with first element
-        for v in array:
-            val = get_value(v)
-            if val < min_val:
-                content = v
-                min_val = val
-        logger.debug(f"Minimum value found: {min_val}")
-        return content
 
     @staticmethod
     def result2string(
@@ -84,72 +68,6 @@ class Allocator:
 
         logger.debug(f"Converted {len(result)} indices to string pairs")
         return str_result
-
-    @staticmethod
-    def _type_of(obj: Any) -> str:
-        """
-        Get the type of an object as a string.
-
-        Args:
-            obj: Object to get type of
-
-        Returns:
-            String representation of the object's type
-        """
-        if obj is None:
-            return "null"
-        elif isinstance(obj, bool):
-            return "boolean"
-        elif isinstance(obj, int | float):
-            return "number"
-        elif isinstance(obj, str):
-            return "string"
-        elif isinstance(obj, list):
-            return "array"
-        elif isinstance(obj, dict):
-            return "object"
-        else:
-            return type(obj).__name__.lower()
-
-    @classmethod
-    def _is_same_object(cls, object1: Any, object2: Any) -> bool:
-        """
-        Deep comparison of two objects.
-
-        Args:
-            object1: First object to compare
-            object2: Second object to compare
-
-        Returns:
-            True if objects are deeply equal, False otherwise
-        """
-        type1 = cls._type_of(object1)
-        type2 = cls._type_of(object2)
-
-        if type1 != type2:
-            return False
-
-        if type1 in ["null", "boolean", "number", "string"]:
-            return object1 == object2
-        elif type1 == "array":
-            if len(object1) != len(object2):
-                return False
-            for i in range(len(object1)):
-                if not cls._is_same_object(object1[i], object2[i]):
-                    return False
-            return True
-        elif type1 == "object":
-            if len(object1) != len(object2):
-                return False
-            for k in object1:
-                if k not in object2:
-                    return False
-                if not cls._is_same_object(object1[k], object2[k]):
-                    return False
-            return True
-        else:
-            logger.warning(f"Unsupported type {type1} detected!")
-            return object1 == object2
 
     class _Memo:
         """Memoization helper class for dynamic programming."""
@@ -224,15 +142,15 @@ class Allocator:
             is_infinity = True  # 空文字が非空文字と対応することはないので
         elif l1 == 1:
             if converted_t1 is None:  # 1要素を変換できなかったら
-                if self._is_same_object(t1, t2):  # t1とt2が同じ（＝変換なし）だったら
+                if t1 == t2:
                     is_zero_cost = True
                 else:
                     is_infinity = True
-            elif self._is_same_object(converted_t1, t2):
+            elif converted_t1 == t2:
                 is_zero_cost = True
             else:
                 is_infinity = True
-        elif converted_t1 is not None and self._is_same_object(converted_t1, t2):
+        elif converted_t1 is not None and converted_t1 == t2:
             is_zero_cost = True
 
         return is_zero_cost, is_infinity, early_return
@@ -357,7 +275,7 @@ class Allocator:
                     )
                 return result
             else:
-                result = self._get_min(results, lambda v: v[0])
+                result = min(results, key=lambda v: v[0])
                 memo.set(s1, l1, s2, l2, result)
                 return result
 
