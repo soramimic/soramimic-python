@@ -48,14 +48,14 @@ class MeCabTokenizer:
 
         # MeCabで解析
         parsed = self.mecab.parse(text)
-        lines = parsed.strip().splitlines()
+        lines = parsed.strip().splitlines()[:-1]  # 最後のEOS行を除外
 
         tokens = []
         for line in lines:
-            if line == "EOS" or not line.strip():
-                continue
 
-            # ipadic形式の解析: 表層形\t品詞,品詞細分類1,品詞細分類2,品詞細分類3,活用型,活用形,原形,読み,発音
+            # ipadic形式の解析:
+            # 表層形\t品詞,品詞細分類1,品詞細分類2,品詞細分類3,
+            # 活用型,活用形,原形,読み,発音
             parts = line.split("\t")
             if len(parts) < 2:
                 continue
@@ -65,14 +65,14 @@ class MeCabTokenizer:
 
             # 各フィールドを取得（不足分は空文字）
             part_of_speech = features[0] if len(features) > 0 else "未知"
-            part_of_speech_level_1 = features[1] if len(features) > 1 else ""
-            part_of_speech_level_2 = features[2] if len(features) > 2 else ""
-            part_of_speech_level_3 = features[3] if len(features) > 3 else ""
-            conjugation_type = features[4] if len(features) > 4 else ""
-            conjugation_form = features[5] if len(features) > 5 else ""
-            basic_form = features[6] if len(features) > 6 else surface
-            reading = features[7] if len(features) > 7 else surface
-            pronunciation = features[8] if len(features) > 8 else reading
+            part_of_speech_level_1 = features[1] if len(features) > 1 else "*"
+            part_of_speech_level_2 = features[2] if len(features) > 2 else "*"
+            part_of_speech_level_3 = features[3] if len(features) > 3 else "*"
+            conjugation_type = features[4] if len(features) > 4 else "*"
+            conjugation_form = features[5] if len(features) > 5 else "*"
+            basic_form = features[6] if len(features) > 6 else "*"
+            reading = features[7] if len(features) > 7 else "*"
+            pronunciation = features[8] if len(features) > 8 else "*"
 
             if pronunciation == "ヲ":
                 pronunciation = "オ"
@@ -120,6 +120,7 @@ class MeCabTokenizer:
             else:
                 result += char
         return result
+
 
 if __name__ == "__main__":
     tokenizer = MeCabTokenizer()

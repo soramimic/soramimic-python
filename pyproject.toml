@@ -39,7 +39,7 @@ indent-width = 4
 target-version = "py312"
 
 [tool.ruff.lint]
-exclude = [".venv"]
+exclude = [".venv", "template"]
 select = [
     "E",      # pycodestyle errors
     "W",      # pycodestyle warnings
@@ -77,8 +77,8 @@ ignore = [
 "tests/*" = ["PLR2004", "PLR0913"]  # テストでは magic number とパラメータ数を許可
 
 [tool.pyright]
-include = ["src", "tests"]
-exclude = [".venv", "**/__pycache__", "template", "manual_tests"]
+include = ["src"]
+exclude = [".venv", "**/__pycache__", "template", "tests", "manual_tests"]
 pythonVersion = "3.12"
 pythonPlatform = "All"
 typeCheckingMode = "basic"
@@ -119,16 +119,17 @@ reportIncompleteStub = "none"
 reportUnsupportedDunderAll = "none"
 
 [tool.bandit]
-exclude_dirs = ["tests", ".venv"]
+exclude_dirs = ["tests", ".venv", "template"]
 skips = ["B101"]  # Skip assert_used test
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "manual_tests"]
 python_files = ["test_*.py", "*_test.py"]
 addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
+    "--ignore=template",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",

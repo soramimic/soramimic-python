@@ -1,8 +1,8 @@
 import re
 from typing import Any
-import jaconv
-from e2k import C2K, NGram
+
 import neologdn
+from e2k import C2K, NGram
 
 c2k = C2K()
 ngram = NGram()
@@ -133,11 +133,11 @@ class English:
     def _english_to_kana(
         self, text: str, dictionary: dict[str, str], tree: dict[str, Any]
     ) -> str:
-        #t = self._zenkaku_english_to_hankaku(text)
+        # t = self._zenkaku_english_to_hankaku(text)
         t = neologdn.normalize(text)
-        #t = self._english_word_to_kana(t, dictionary)
-        #t = self._roman_to_kana(t, tree)
-        #t = self._alphabet_to_kana(t, dictionary)
+        # t = self._english_word_to_kana(t, dictionary)
+        # t = self._roman_to_kana(t, tree)
+        # t = self._alphabet_to_kana(t, dictionary)
         if ngram(t):
             return c2k(t)
         else:

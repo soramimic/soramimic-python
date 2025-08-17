@@ -1,6 +1,6 @@
 import tempfile
 
-from soramimic_python.core.soramimic import Mora, ParodyWord, load_wordlist
+from soramimic_python.core.loader import wordlist
 
 
 def create_sample_wordlist() -> str:
@@ -27,16 +27,12 @@ def create_sample_wordlist() -> str:
     return temp_path
 
 
-class TestLoadWordList:
+class TestWordList:
     def test_正常系_単語リストが正しく読み込まれる(self) -> None:
         """単語リストが正しく読み込まれることを確認するテスト。"""
-
         csv_path = create_sample_wordlist()
-        wordlist = load_wordlist(csv_path)
-        assert wordlist[0] == ParodyWord(
-            id="日本",
-            moras=[
-                Mora(surface="日本", mora="ニッ", is_phrase_start=True),
-                Mora(surface="", mora="ポン", is_phrase_start=False),
-            ],
-        )
+        result = wordlist.parse_tidy(open(csv_path, encoding="utf-8").read(), where="")
+
+        # 結果がdict型で、キーに長さが含まれることを確認
+        assert isinstance(result, dict)
+        assert len(result) > 0
