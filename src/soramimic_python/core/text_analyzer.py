@@ -1,7 +1,10 @@
+import re
 from collections.abc import Callable
 from typing import Any
 
-from .character import TokenFormatter
+import jaconv
+
+from soramimic_python.core.character import TokenFormatter
 
 
 class TextAnalyzer:
@@ -35,20 +38,16 @@ class TextAnalyzer:
 
     # ひらがなをカタカナに
     @staticmethod
-    def hira_to_kata(s: str) -> str:
-        return "".join(
-            chr(ord(ch) + 0x60) if "\u3041" <= ch <= "\u3096" else ch for ch in s
-        )
+    def _hira_to_kata(s: str) -> str:
+        return jaconv.hira2kata(s)
 
     @staticmethod
-    def remove_sign(s: str) -> str:
+    def _remove_sign(s: str) -> str:
         # 記号削除用の簡易版（必要に応じて正規表現強化）
-        import re
-
         return re.sub(r"[^\wぁ-ゔァ-ヴー一-龠]", "", s)
 
     @staticmethod
-    def remove_unnatural_kana_pattern(s: str) -> str:
+    def _remove_unnatural_kana_pattern(s: str) -> str:
         # 不自然なカナパターンを除去する処理（詳細は実装環境に合わせて調整）
         return s
 
@@ -78,14 +77,10 @@ class TextAnalyzer:
             for token in tokens:
                 if token["pronunciation"] != "*":
                     continue
-                s = self.remove_sign(token["surface_form"])
-                s = self.hira_to_kata(s)
-                if all(
-                    "\u30a1" <= ch <= "\u30f6"
-                    or "\u3000" <= ch <= "\u301c"
-                    or "\u30fb" <= ch <= "\u30fe"
-                    for ch in s
-                ):
+                s = self._remove_sign(token["surface_form"])
+                s = self._hira_to_kata(s)
+                # カタカナ文字・日本語記号・カタカナ記号のみかチェック
+                if re.fullmatch(r"[\u30a1-\u30f6\u3000-\u301c\u30fb-\u30fe]*", s):
                     token["pronunciation"] = s
 
             formatted_tokens = self.tf.format(tokens)
@@ -100,21 +95,19 @@ class TextAnalyzer:
 
     def get_yomi_from_tokens(self, tokens: list[dict[str, Any]]) -> str:
         yomi = "".join(token.get("pronunciation", "") for token in tokens)
-        return self.remove_sign(yomi)
+        return self._remove_sign(yomi)
 
     def format_kana(self, text: str) -> str:
-        import re
-
         def repl(match):
-            return self.english.toKana(match.group(0))
+            return self.english.to_kana(match.group(0))
 
         text = re.sub(r"[a-zA-Z']+", repl, text)
-        text = self.hira_to_kata(text)
-        text = self.remove_sign(text)
-        text = self.remove_unnatural_kana_pattern(text)
+        text = self._hira_to_kata(text)
+        text = self._remove_sign(text)
+        text = self._remove_unnatural_kana_pattern(text)
         return text
 
-    def concat_mora(self, tokens: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _concat_mora(self, tokens: list[dict[str, Any]]) -> list[dict[str, Any]]:
         # 同じ char_index の surface_form をまとめる
         for i in range(1, len(tokens)):
             if tokens[i]["char_index"] == tokens[i - 1]["char_index"]:
@@ -164,17 +157,17 @@ class TextAnalyzer:
         for idx, mi in enumerate(mora_index):
             tokens[idx]["mora"] = mi
 
-        tokens = self.concat_mora(tokens)
+        tokens = self._concat_mora(tokens)
         return tokens
 
-    def yomi_to_syllable(self, yomi: str) -> list[str]:
+    def _yomi_to_syllable(self, yomi: str) -> list[str]:
         return self.k2s.split(yomi)
 
     def syllable_to_variation(self, syllables: list[str]) -> list[str]:
         return self.k2s.get_variation(syllables)
 
     def yomi_to_variation(self, yomi: str) -> list[str]:
-        return self.k2s.get_variation(self.k2s.split(yomi))
+        return self.k2s.get_variation(self._yomi_to_syllable(yomi))
 
     def get_yomi(self, text: str) -> str:
         return self.get_yomi_func(text)
