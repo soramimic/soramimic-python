@@ -14,8 +14,6 @@ from soramimic_python.core.wordlist import WordList
 # ====== パス定義（JSの定数をPythonに） ======
 data_dir = Path(__file__).resolve().parent.parent / "data"
 KANJIDICT_PATH = data_dir / "kanjiyomi.json"
-ENGLISH_DICTIONARY_PATH = data_dir / "bep-eng.json"
-ROMAN_TREE_PATH = data_dir / "tree_roma2kana.json"
 
 VOWEL_SIMILARITY_PATH = data_dir / "simVowelsSimple.json"
 CONSONANT_SIMILARITY_PATH = data_dir / "simConsonantsSimple.json"
@@ -31,8 +29,6 @@ def _load_json(path: Path) -> dict[str, Any]:
 # initialize
 
 _kanji_dict = _load_json(KANJIDICT_PATH)
-_english_dictionary = _load_json(ENGLISH_DICTIONARY_PATH)
-_roman_tree = _load_json(ROMAN_TREE_PATH)
 _vowel_similarity = _load_json(VOWEL_SIMILARITY_PATH)
 _consonant_similarity = _load_json(CONSONANT_SIMILARITY_PATH)
 _kana2phonon = _load_json(KANA2PHONON_PATH)
@@ -49,7 +45,7 @@ get_yomi = _mecab.get_yomi
 _kanji = Kanji(_kanji_dict)
 _character = Character(_kanji)
 _k2s = KanaToSyllable()
-_english = English(_english_dictionary, _roman_tree)
+_english = English()
 _text_analyzer = TextAnalyzer(_character, _k2s, _english, _tokenize_sentences, get_yomi)
 
 # 5) そらみみメーカー等の構築

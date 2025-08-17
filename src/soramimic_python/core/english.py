@@ -1,6 +1,5 @@
 import re
 from typing import Any
-
 import neologdn
 from e2k import C2K, NGram
 
@@ -46,98 +45,13 @@ class English:
     - tokenizer: .tokenize(str) -> List[dict(surface_form, pronunciation, ...)]
     """
 
-    def __init__(self, DICTIONARY: dict[str, str], TREE: dict[str, Any]):
-        self.DICTIONARY = DICTIONARY
-        self.TREE = TREE
+    def __init__(self):
         self.apostrophe = Apostrophe()
 
-    def _zenkaku_english_to_hankaku(self, text: str) -> str:
-        # /[Ａ-Ｚａ-ｚ]/ を半角へ（英字のみ）
-        def conv(m):
-            ch = m.group(0)
-            return chr(ord(ch) - 65248)
-
-        return re.sub(r"[Ａ-Ｚａ-ｚ]", conv, text)
-
-    def _roman_to_kana(self, text: str, tree: dict[str, Any]) -> str:
-        """
-        JS romanToKana をそのまま移植。
-        - 英字のみを対象（a-z）。それ以外の文字が来たらそのまま出力。
-        - 子音重複→促音、末尾 n → ン を処理
-        - trie(TREE) で最長一致（葉が文字列なら確定出力）
-        """
-        s_lower = text.lower()
-        result = ""
-        tmp = ""  # 途中まで積んだ元のケースの文字列
-        index = 0
-        node = tree
-
-        def push(chars: str, to_root: bool = True):
-            nonlocal result, tmp, node
-            result += chars
-            tmp = ""
-            node = tree if to_root else node
-
-        while index < len(s_lower):
-            ch_low = s_lower[index]
-            ch_orig = text[index]
-
-            if re.match(r"[a-z]", ch_low):
-                if ch_low in node:
-                    nxt = node[ch_low]
-                    if isinstance(nxt, str):
-                        # ここで確定：カナ追加、ルートに戻す
-                        push(nxt)
-                    else:
-                        # まだ枝の途中：原文の文字を tmp に積む、node を進める
-                        tmp += ch_orig
-                        node = nxt
-                    index += 1
-                    continue
-
-                # ここに来たら現在の node では一致しない
-                prev = s_lower[index - 1] if index > 0 else ""
-                if prev and prev in ("n", ch_low):
-                    # 促音 or 'n'
-                    push("ン" if prev == "n" else "ッ", to_root=False)
-
-                # いったん仕切り直し（ルートに戻して再解釈）
-                if node is not tree and ch_low in tree:
-                    push(tmp)  # 途中まで積んだ未確定分をそのまま出力
-                    continue
-
-            # 英字でない or どうにもならないので、tmp + 現文字をそのまま出力
-            push(tmp + ch_orig)
-            index += 1
-
-        # 末尾の n は ン に変換
-        if tmp.endswith("n"):
-            tmp = re.sub(r"n$", "ン", tmp)
-        push(tmp)
-        return result
-
-    def _english_word_to_kana(self, text: str, dictionary: dict[str, str]) -> str:
-        upper = text.upper()
-        return dictionary.get(upper, text)
-
-    def _alphabet_to_kana(self, text: str, dictionary: dict[str, str]) -> str:
-        # 英字単体を辞書の対応へ（例: A->エー など）
-        t = text.upper()
-        found = re.findall(r"[A-Z]", t)
-        if found:
-            for v in found:
-                if v in dictionary:
-                    t = t.replace(v, dictionary[v])
-        return t
-
     def _english_to_kana(
-        self, text: str, dictionary: dict[str, str], tree: dict[str, Any]
+        self, text: str
     ) -> str:
-        # t = self._zenkaku_english_to_hankaku(text)
         t = neologdn.normalize(text)
-        # t = self._english_word_to_kana(t, dictionary)
-        # t = self._roman_to_kana(t, tree)
-        # t = self._alphabet_to_kana(t, dictionary)
         if ngram(t):
             return c2k(t)
         else:
@@ -170,7 +84,7 @@ class English:
         return out
 
     def to_kana(self, text: str) -> str:
-        return self._english_to_kana(text, self.DICTIONARY, self.TREE)
+        return self._english_to_kana(text)
 
 
 if __name__ == "__main__":
