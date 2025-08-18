@@ -20,6 +20,7 @@ dependencies = [
     "e2k>=0.6.2",
     "neologdn>=0.5.4",
     "english2kana>=0.1.5",
+    "editdistance>=0.8.1",
 ]
 
 [build-system]
