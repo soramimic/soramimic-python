@@ -1,6 +1,17 @@
 import re
 from collections.abc import Callable
-from typing import Any
+from io import StringIO
+from typing import Any, TypedDict
+
+import pandas as pd
+
+
+class ParodyWord(TypedDict, total=False):
+    id: str
+    surface: str
+    pronunciation: str
+    kana: str
+    original: str
 
 
 class Parser:
@@ -142,6 +153,23 @@ class Parser:
         return out
 
 
+def convert_where_query_to_pandas(where: str) -> str:
+    """
+    既存のクエリ形式をpandas.DataFrame.query()形式に変換する。
+
+    Args:
+        where: 既存形式のクエリ文字列 (例: "type=family or type=registered")
+
+    Returns:
+        pandas形式のクエリ文字列 (例: "type=='family' or type=='registered'")
+    """
+    # != を !='' に変換（値をクォートで囲む）
+    where_pandas = re.sub(r"(\w+)\s*!=\s*(\w+)", r"\1!='\2'", where)
+    # = を =='' に変換（値をクォートで囲む）
+    where_pandas = re.sub(r"(\w+)\s*=\s*(\w+)", r"\1=='\2'", where_pandas)
+    return where_pandas
+
+
 class WordList:
     """
     JS WordList(textAnalyzer) を Python へ移植。
@@ -171,81 +199,71 @@ class WordList:
         # カンマ前後の空白削除（, の左右の \s* を消す）
         return re.sub(r"\s*,\s*", ",", text)
 
-    @staticmethod
-    def _split_csv_lines(text: str) -> tuple[list[str], list[list[str]]]:
-        lines = re.split(r"\r\n|\n|\r", text)
-        if not lines or not lines[0]:
-            return [], []
-        header = lines[0].split(",")
-        df: list[list[str]] = []
-        for line in lines[1:]:
-            if line == "":
-                continue
-            df.append(line.split(","))
-        return header, df
-
     # ---- tidy CSV text loader ----
-    def parse_tidy(
-        self, csv_text: str, where: str = ""
-    ) -> dict[int, list[dict[str, Any]]]:
+    def parse_tidy(self, csv_text: str, where: str = "") -> dict[int, list[ParodyWord]]:
         """
         JS: loadDatabaseCsvText(text, query_str)
+        pandasを使ってシンプルに実装
         """
-        text = self._clean_csv_text(csv_text)
-        header, df = self._split_csv_lines(text)
-        if not header:
-            return {}
 
-        # 条件適用
+        # pandasでCSVを読み込み
+        df = pd.read_csv(StringIO(csv_text))
+
+        # 条件適用（where句がある場合）
         if where:
-            df = self._parser.filter(where, header, df)
+            # pandasのquery機能を使用してフィルタリング
+            try:
+                where_pandas = convert_where_query_to_pandas(where)
+                df = df.query(where_pandas)
+                if df.empty:
+                    return {}
+            except Exception:
+                # クエリが無効な場合は空結果を返す
+                return {}
 
-        # ヘッダ index
-        h2i = {h: idx for idx, h in enumerate(header)}
+        # pronunciationが無い/NAのときはsurfaceを採用
+        if "pronunciation" not in df.columns:
+            df["pronunciation"] = df["surface"]
+        else:
+            df["pronunciation"] = df["pronunciation"].fillna(df["surface"])
+            df.loc[df["pronunciation"].str.lower() == "na", "pronunciation"] = df[
+                "surface"
+            ]
 
-        # pronunciation が無い/NA のときは surface を採用
-        pronunciations: list[str] = []
-        for row in df:
-            p = row[h2i.get("pronunciation", -1)] if "pronunciation" in h2i else ""
-            if not p or p.lower() == "na":
-                p = row[h2i["surface"]]
-            pronunciations.append(p)
+        # かな推定（漢字を含む行だけ個別にget_yomiを呼び出し）
+        kanji_mask = df["pronunciation"].apply(self._has_kanji)
+        kanji_rows = df.loc[kanji_mask, "pronunciation"]
 
-        # かな推定（漢字を含む行だけ個別に get_yomi を呼び出し）
-        kanji_indices: list[int] = [
-            i for i, p in enumerate(pronunciations) if self._has_kanji(p)
-        ]
-        if kanji_indices:
-            # 各文字列に対して個別にget_yomiを呼び出し
-            for idx in kanji_indices:
-                yomi_result = self.text_analyzer.get_yomi(pronunciations[idx])
-                pronunciations[idx] = yomi_result
+        for idx in kanji_rows.index:
+            yomi_result = self.text_analyzer.get_yomi(df.at[idx, "pronunciation"])
+            df.at[idx, "pronunciation"] = yomi_result
 
         # 正規化（英語→カナ、ひら→カタ、記号除去など）
-        pronunciations = [self.text_analyzer.format_kana(p) for p in pronunciations]
+        df["pronunciation"] = df["pronunciation"].apply(self.text_analyzer.format_kana)
+
+        # 空の発音を除外
+        df = df[df["pronunciation"].str.len() > 0]
 
         # 変形パターン展開
-        resultdb: dict[int, list[dict[str, Any]]] = {}
-        for i, row in enumerate(df):
-            obj = {h: row[h2i[h]] for h in header if h in h2i and h2i[h] < len(row)}
+        resultdb: dict[int, list[ParodyWord]] = {}
 
-            kana_norm = pronunciations[i]
-            if not kana_norm:
-                continue
-
+        for idx, row in df.iterrows():
             # バリエーション（モーラ列の置換パターン等）
-            pvars = self.text_analyzer.yomi_to_variation(kana_norm)
+            pvars = self.text_analyzer.yomi_to_variation(row["pronunciation"])
+
             for p in pvars:
-                L = len(p)
-                resultdb.setdefault(L, []).append(
-                    {
-                        "surface": obj.get("surface", ""),
-                        "pronunciation": p,
-                        "kana": kana_norm,
-                        "id": obj.get("id", str(i)),
-                        "original": obj.get("original", obj.get("surface", "")),
-                    }
-                )
+                length = len(p)
+                parody_word: ParodyWord = {
+                    "surface": str(row.get("surface", "")),
+                    "pronunciation": p,
+                    "kana": str(row["pronunciation"]),
+                    "id": str(row.get("id", idx)),
+                    "original": str(row.get("original", row.get("surface", ""))),
+                }
+
+                if length not in resultdb:
+                    resultdb[length] = []
+                resultdb[length].append(parody_word)
 
         return resultdb
 
@@ -286,7 +304,7 @@ class WordList:
         out_lines += [",".join(r) for r in csv_rows]
         return "\n".join(out_lines)
 
-    def parse_plain(self, text: str) -> dict[int, list[dict[str, Any]]]:
+    def parse_plain(self, text: str) -> dict[int, list[ParodyWord]]:
         """
         JS loadDatabaseText(text) の簡潔版:
         - プレーンを CSV にしてから parse_tidy を適用
