@@ -1,5 +1,35 @@
 import MeCab
+from typing import TypedDict
+from jphrase import PhraseSplitter
 
+phrase_splitter = PhraseSplitter(output_type=PhraseSplitter.OUTPUT_DETAILED)
+
+
+class MecabToken(TypedDict):
+    surface: str
+    pronunciation: str
+    pos: str
+
+def split_to_phrases(text: str) -> list[list[MecabToken]]:
+    """テキストをトークン化し、MecabTokenのリストを返す"""
+    phrases = phrase_splitter.split_text(text)
+    format_phrases = []
+    for phrase in phrases:
+        format_phrase = []
+        for token in phrase:
+            pronunciation = token["pronunciation"]
+            if pronunciation == "":
+                pronunciation = "*"
+            format_token = MecabToken(
+                surface=token["surface_form"],
+                pronunciation=pronunciation,
+                pos=token["pos"]
+            )
+            format_phrase.append(format_token)
+
+        format_phrases.append(format_phrase)
+
+    return format_phrases
 
 class MeCabTokenizer:
     """
@@ -7,26 +37,14 @@ class MeCabTokenizer:
     JS版のAPIコールの代わりに、ローカルのMeCabインスタンスを使用する。
     """
 
-    def __init__(self, dictionary_path: str | None = None):
+    def __init__(self):
         """
         MeCabインスタンスを初期化
-
-        Args:
-            dictionary_path: MeCab辞書のパス（Noneの場合はシステムデフォルト）
         """
         # MeCabのオプション設定
         # 出力フォーマット: 表層形\t品詞,品詞細分類1,品詞細分類2,品詞細分類3,
         # 活用型,活用形,原形,読み,発音
-        mecab_args = ""  # ipadic形式（デフォルト）
-        if dictionary_path:
-            mecab_args += f" -d {dictionary_path}"
-
-        try:
-            self.mecab = MeCab.Tagger(mecab_args)
-        except Exception as e:
-            # フォールバック: デフォルト設定
-            print(f"MeCab初期化警告: {e}")
-            self.mecab = MeCab.Tagger()
+        self.mecab = MeCab.Tagger()
 
     def tokenize(self, text: str) -> list[dict[str, str]]:
         """
