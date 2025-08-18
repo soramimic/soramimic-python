@@ -1,7 +1,17 @@
+import json
 import re
-from typing import Any
+from pathlib import Path
+from typing import Any, TypedDict
 
+import editdistance as ed
 import jaconv
+import jamorasep
+
+from soramimic_python.core.aligner import BaseAlignedPair, BaseAligner
+
+# Type aliases for better readability while allowing flexibility
+MoraToken = dict[str, Any]
+KanaTypeToken = dict[str, Any]
 
 
 # ========= TokenFormatter =========
@@ -242,7 +252,7 @@ class Character:
         # print("kanji in Character", kanji)
         self.kanji = kanji
 
-    def _kana_tokenize(self, text: str) -> list[dict[str, str]]:
+    def _kana_tokenize(self, text: str) -> list[KanaTypeToken]:
         if text == "":
             return []
         # カタカナ / ひらがな / 非カナ の 3 グループ
@@ -255,7 +265,7 @@ class Character:
             token = {}
             for k, v in g.items():
                 if v:
-                    token = {"surface_form": v, "type": k}
+                    token = {"surface": v, "type": k}
                     break
             out.append(token)
         return out
@@ -267,16 +277,14 @@ class Character:
 
         return re.sub(r"[\u3041-\u3096]", conv, s)
 
-    def _balanced_allocate(
-        self, surface: str, pronunciation: str
-    ) -> list[dict[str, Any]]:
+    def _balanced_allocate(self, surface: str, pronunciation: str) -> list[MoraToken]:
         # surface と pronunciation の長さバランスで対応を割り振る
-        text = {"surface_form": surface, "pronunciation": pronunciation}
-        longer = "surface_form"
+        text = {"surface": surface, "pronunciation": pronunciation}
+        longer = "surface"
         shorter = "pronunciation"
         if len(surface) <= len(pronunciation):
             longer = "pronunciation"
-            shorter = "surface_form"
+            shorter = "surface"
 
         plusone = (
             len(text[longer]) % len(text[shorter]) if len(text[shorter]) > 0 else 0
@@ -312,8 +320,8 @@ class Character:
         return output
 
     def _kana_allocate(
-        self, separated_surface: list[dict[str, str]], pronunciation: str
-    ) -> list[dict[str, Any]]:
+        self, separated_surface: list[KanaTypeToken], pronunciation: str
+    ) -> list[KanaTypeToken]:
         if len(separated_surface) == 0:
             return []
 
@@ -321,8 +329,8 @@ class Character:
         rest_text = pronunciation
 
         for i in range(len(separated_surface)):
-            typ = separated_surface[i]["type"]
-            surface = separated_surface[i]["surface_form"]
+            typ = separated_surface[i].type
+            surface = separated_surface[i].surface
 
             if typ == "nonkana":
                 continue
@@ -336,7 +344,7 @@ class Character:
                 # rest_text[:start] と等価
                 output.append(
                     {
-                        "surface_form": nonkana["surface_form"],
+                        "surface_form": nonkana["surface"],
                         "pronunciation": rest_text[:start],
                         "type": nonkana["type"],
                     }
@@ -345,7 +353,7 @@ class Character:
 
             output.append(
                 {
-                    "surface_form": surface,
+                    "surface": surface,
                     "pronunciation": rest_text[: len(katakana)],
                     "type": typ,
                 }
@@ -356,7 +364,7 @@ class Character:
             last = separated_surface[-1]
             output.append(
                 {
-                    "surface_form": last["surface_form"],
+                    "surface_form": last["surface"],
                     "pronunciation": rest_text,
                     "type": last["type"],
                 }
@@ -477,23 +485,156 @@ class Character:
         return self._get_char_correspondence(tokens)
 
 
+def load_default_kanjidict() -> dict[str, list[str]]:
+    default_kanjidict_path = Path(__file__).parent.parent / "data/kanjiyomi.json"
+    with default_kanjidict_path.open(encoding="utf-8") as f:
+        kanjidict: dict[str, list[str]] = json.load(f)
+        return kanjidict
+
+class RubiPair(TypedDict):
+    surface: str
+    pronunciation: tuple[str, ...]
+
+def to_rubi_pair(pair: BaseAlignedPair) -> RubiPair:
+    pair = pair.copy()
+    return {
+        "surface": "".join(pair["target"]),
+        "pronunciation": pair["reference"],
+    }
+
+def join_bar_in_pair(pair: RubiPair) -> RubiPair:
+    pair = pair.copy()
+    # pronunciationの先頭以外が長音のとき、直前とくっつける
+    if not pair["pronunciation"]:
+        return pair
+    
+    if "ー" not in pair["pronunciation"]:
+        return pair
+    
+    joined_pronunciations = [pair["pronunciation"][0]]
+    for p in pair["pronunciation"][1:]:
+        if p == "ー":
+            joined_pronunciations[-1] += "ー"
+        else:
+            joined_pronunciations.append(p)
+
+    pair["pronunciation"] = tuple(joined_pronunciations)
+
+    return pair
+
+def join_bar_between_pairs(pairs: list[RubiPair]) -> list[RubiPair]:
+    pairs = [pair.copy() for pair in pairs]
+
+    joined_pairs = []
+    for pair in pairs:
+        if not joined_pairs:
+            joined_pairs.append(pair)
+            continue
+        if pair["pronunciation"] and pair["pronunciation"][0] == "ー":
+            joined_pairs[-1]["pronunciation"] = joined_pairs[-1]["pronunciation"][:-1] + (joined_pairs[-1]["pronunciation"][-1] + "ー",)
+            pair["pronunciation"] = pair["pronunciation"][1:]
+            joined_pairs.append(pair)
+        else:
+            joined_pairs.append(pair)
+    
+    return joined_pairs
+
+def join_silent_pairs(pairs: list[RubiPair]) -> list[RubiPair]:
+    pairs = [pair.copy() for pair in pairs]
+    
+    # 空のreferenceと対応するtargetを直前のpair.targetとくっつける
+    joined_pairs = []
+    for pair in pairs:
+        if not joined_pairs:
+            joined_pairs.append(pair)
+            continue
+        if not joined_pairs[-1]["pronunciation"]:
+            joined_pairs[-1]["surface"] = joined_pairs[-1]["surface"] + pair["surface"]
+            joined_pairs[-1]["pronunciation"] = pair["pronunciation"]
+            continue
+
+        if not pair["pronunciation"]:
+            joined_pairs[-1]["surface"] = joined_pairs[-1]["surface"] + pair["surface"]
+            continue
+
+        joined_pairs.append(pair)
+    
+    return joined_pairs
+
+def convert_to_rubi_pairs(pairs: list[BaseAlignedPair]) -> list[RubiPair]:
+    rubi_pairs = [to_rubi_pair(pair) for pair in pairs]
+    rubi_pairs = [join_bar_in_pair(pair) for pair in rubi_pairs]
+    rubi_pairs = join_bar_between_pairs(rubi_pairs)
+    rubi_pairs = join_silent_pairs(rubi_pairs)
+
+    return rubi_pairs
+
+
+class RubiAligner:
+    def __init__(self, kanjidict: dict[str, list[str]] | None = None):
+        if kanjidict is None:
+            kanjidict = load_default_kanjidict()
+
+        self.kanjidict = set()
+        for k, pronunciations in kanjidict.items():
+            for pronunciation in pronunciations:
+                self.kanjidict.add(
+                    (tuple(k), tuple(jamorasep.parse(jaconv.hira2kata(pronunciation))))
+                )
+
+        self.pair_length_patterns = set([(1, 1), (1, 0), (0, 1)])
+        for k, v in self.kanjidict:
+            self.pair_length_patterns.add((len(k), len(v)))
+
+        self.aligner = BaseAligner(self.cost_func, self.pair_length_patterns)
+
+    def cost_func(
+        self, surface: tuple[str, ...], pronunciation: tuple[str, ...]
+    ) -> float:
+        epsilon = (
+            1e-6 * max(len(surface), len(pronunciation)) ** 2
+        )  # コストが同じ場合、なるべく短い分割を優先させるためのペナルティ
+        if not surface or not pronunciation:
+            return (
+                ed.eval(surface, pronunciation) + epsilon * 10
+            )  # コストが同じ場合、挿入や削除より、置換を優先させるためのペナルティ
+
+        surface_katakana = tuple([jaconv.hira2kata(v) for v in surface])
+        reference_katakana = tuple([jaconv.hira2kata(v) for v in pronunciation])
+
+        if surface_katakana == reference_katakana:
+            return 0.0 + epsilon
+
+        # 漢字の処理
+        if (surface_katakana, reference_katakana) in self.kanjidict:
+            return 0.0 + epsilon
+
+        return ed.eval(surface_katakana, reference_katakana) + epsilon
+
+    def align(
+        self, surface: str, pronunciation: str
+    ) -> list[RubiPair]:
+        surface_list = jamorasep.parse(surface)
+        reference_list = jamorasep.parse(pronunciation)
+
+        _, result = self.aligner.align(tuple(surface_list), tuple(reference_list))
+
+        rubi_pairs = convert_to_rubi_pairs(result)
+
+        return rubi_pairs
+
+
 if __name__ == "__main__":
     # Example usage
-    kanji_dict = {
-        "漢": ["カン"],
-        "字": ["ジ"],
-        "語": ["ゴ"],
-        "熟": ["ジュク"],
-    }
-    kanji = Kanji(kanji_dict)
-    character = Character(kanji)
+    import json
+    from pathlib import Path
 
-    tokens = [
-        {"surface_form": "漢字", "pronunciation": "カンジー", "pos": "名詞"},
-        {"surface_form": "じゃ", "pronunciation": "ジャ", "pos": "助詞"},
-        {"surface_form": "語", "pronunciation": "カタリ", "pos": "名詞"},
-    ]
-
-    result = character.tokenize(tokens)
-    for r in result:
-        print(r)
+    with (Path(__file__).parent.parent / "data/kanjiyomi.json").open(
+        encoding="utf-8"
+    ) as f:
+        kanjidict = json.load(f)
+    aligner = RubiAligner()
+    # print(aligner.pair_length_patterns)
+    print(aligner.align("「庭」には2羽鶏がいる", "ニワニワニワニワトリガイル"))
+    print(aligner.align("abcd", "エーシー"))
+    print(aligner.align("「", ""))

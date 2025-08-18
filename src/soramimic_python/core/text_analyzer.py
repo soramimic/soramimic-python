@@ -1,11 +1,64 @@
 import re
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypedDict
 
 import jaconv
 
-from soramimic_python.core.character import TokenFormatter
+from soramimic_python.core.character import TokenFormatter, RubiAligner, join_silent_pairs
+from soramimic_python.core.mecab_tokenizer import split_to_phrases, MecabToken
+from soramimic_python.core.english import English
 
+class Mora(TypedDict):
+    surface: str
+    pronunciation: str
+    is_phrase_start: bool
+
+rubi_aligner = RubiAligner()
+english = English()
+
+def _convert_surface_to_pronunciation(surface: str) -> str:
+    # 表層形から発音を取得する処理
+    if english.is_fullmatch(surface):
+        return english.to_kana(surface)
+    surface_katakana = jaconv.hira2kata(surface)
+    # カタカナのみ抽出
+    pronunciation = re.sub(r"[^ァ-ヶー]", "", surface_katakana)
+    return pronunciation
+
+def tokenize(text: str) -> list[Mora]:
+    ap = english.apostrophe
+    phrases = split_to_phrases(text)
+    moras = []
+    for phrase in phrases:
+        phrase_pairs = []
+        for token in phrase:
+            # アポストロフィを戻す
+            token["surface"] = ap.to_sign(token["surface"])
+            # 記号ではなく発音が未定義であれば、surfaceから発音を取得
+            if token["pos"] != "記号" and token["pronunciation"] and token["pronunciation"] != "*":
+                pass
+            else:
+                token["pronunciation"] = _convert_surface_to_pronunciation(token["surface"])
+            # surfaceとpronunciationをなるべく細かく対応付け
+            pairs = rubi_aligner.align(token["surface"], token["pronunciation"])
+            phrase_pairs.extend(pairs)
+        # pronunciationがないtokenを前後と結合する
+        phrase_pairs = join_silent_pairs(phrase_pairs)
+        phrase_moras = []
+        for phrase_pair in phrase_pairs:
+            word_pairs = []
+            for p in phrase_pair["pronunciation"]:
+                mora = {
+                    "surface": "",
+                    "pronunciation": p,
+                    "is_phrase_start": False
+                }
+                word_pairs.append(mora)
+            word_pairs[0]["surface"] = phrase_pair["surface"]
+            phrase_moras.extend(word_pairs)
+        phrase_moras[0]["is_phrase_start"] = True
+        moras.extend(phrase_moras)
+    return moras
 
 class TextAnalyzer:
     """
@@ -24,14 +77,10 @@ class TextAnalyzer:
         character,
         kana_to_syllable,
         english,
-        tokenize_sentenses: Callable[[list[str]], list[list[dict[str, str]]]],
-        get_yomi: Callable[[str], str],
     ):
         self.character = character
         self.k2s = kana_to_syllable
         self.english = english
-        self.tokenize_sentenses = tokenize_sentenses
-        self.get_yomi_func = get_yomi
 
         self.tf = TokenFormatter()
         self.kanji = self.character.kanji
@@ -51,49 +100,61 @@ class TextAnalyzer:
         # 不自然なカナパターンを除去する処理（詳細は実装環境に合わせて調整）
         return s
 
-    def tokenize_together(self, texts: list[str]) -> list[list[dict[str, Any]]]:
+    def _convert_surface_to_pronunciation(self, surface: str) -> str:
+        # 表層形から発音を取得する処理
+        if self.english.is_fullmatch(surface):
+            return self.english.to_kana(surface)
+        elif self.kanji._is_fullmatch(surface):
+            return self.kanji.to_kana(surface)
+        else:
+            pronunciation = self._hira_to_kata(surface)
+            # カタカナのみ抽出
+            pronunciation = re.sub(r"[^ァ-ヶー]", "", pronunciation)
+            return pronunciation
+    
+    def tokenize(self, text: str) -> list[Mora]:
+        AP = self.english.apostrophe
+        text = AP.to_string(text)
+        phrases = tokenize(text)
+        moras = []
+        for phrase in phrases:
+            is_phrase_start = True
+            for token in phrase:
+                # アポストロフィを戻す
+                token.surface = AP.to_sign(token.surface)
+                # 記号ではなく発音が未定義であれば、surfaceから発音を取得
+                if token.pos != "記号" and token.pronunciation and token.pronunciation != "*":
+                    pass
+                else:
+                    token.pronunciation = self._convert_surface_to_pronunciation(token.surface)
+                # phraseの区切りの定義
+
+                
+
+        return phrases
+
+    def tokenize_together(self, texts: list[str]) -> list[list[MecabToken]]:
         AP = self.english.apostrophe
         texts = [AP.to_string(v) for v in texts]
+        phrases_list = []
+        for text in texts:
+            phrases = tokenize(text)
+            for phrase in phrases:
+                for token in phrase:
+                    token.surface = AP.to_sign(token.surface)
+            phrases_list.append(phrases)
+    
+        for phrases in phrases_list:
+            for phrase in phrases:
+                for token in phrase:
+                    if token.pos != "記号" and token.pronunciation and token.pronunciation != "*":
+                        pass
+                    else:
+                        token.pronunciation = self._convert_surface_to_pronunciation(token.surface)
 
-        tokens_list = self.tokenize_sentenses(texts)
-        processed_list = []
-        for tokens in tokens_list:
-            # 英単語の処理
-            for token in tokens:
-                if self.english.is_fullmatch(token["surface_form"]):
-                    token["surface_form"] = AP.to_sign(token["surface_form"])
-                    token["pronunciation"] = self.english.to_kana(token["surface_form"])
+        return phrases_list
 
-            # 漢字の処理
-            for token in tokens:
-                if token["pronunciation"] == "*" and self.kanji._is_fullmatch(
-                    token["surface_form"]
-                ):
-                    p = self.kanji.to_kana(token["surface_form"])
-                    if p:
-                        token["pronunciation"] = p
-
-            # カタカナ読みの設定
-            for token in tokens:
-                if token["pronunciation"] != "*":
-                    continue
-                s = self._remove_sign(token["surface_form"])
-                s = self._hira_to_kata(s)
-                # カタカナ文字・日本語記号・カタカナ記号のみかチェック
-                if re.fullmatch(r"[\u30a1-\u30f6\u3000-\u301c\u30fb-\u30fe]*", s):
-                    token["pronunciation"] = s
-
-            formatted_tokens = self.tf.format(tokens)
-
-            for token in formatted_tokens:
-                if token["pronunciation"] == "*":
-                    token["pos"] = "記号"
-
-            processed_list.append(formatted_tokens)
-
-        return processed_list
-
-    def get_yomi_from_tokens(self, tokens: list[dict[str, Any]]) -> str:
+    def get_yomi_from_tokens(self, tokens: list[MecabToken]) -> str:
         yomi = "".join(token.get("pronunciation", "") for token in tokens)
         return self._remove_sign(yomi)
 
@@ -123,9 +184,12 @@ class TextAnalyzer:
                 mora_tokens[-1]["pronunciation"] += token["pronunciation"]
         return mora_tokens
 
+    def tokenize(self, text: str) -> list[Mora]:
+        tokens = self
+
     def get_yomi_and_phrase_break(
-        self, tokens: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+        self, tokens: list[MecabToken]
+    ) -> list[MecabToken]:
         tokens = self.character.tokenize(tokens)
         tokens = [
             {
@@ -171,3 +235,7 @@ class TextAnalyzer:
 
     def get_yomi(self, text: str) -> str:
         return self.get_yomi_func(text)
+
+if __name__ == "__main__":
+    print(tokenize("テスト"))
+    print(tokenize("「庭」には二羽鶏がいる。englishを信じて。"))
