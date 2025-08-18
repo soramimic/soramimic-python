@@ -52,7 +52,6 @@ class MeCabTokenizer:
 
         tokens = []
         for line in lines:
-
             # ipadic形式の解析:
             # 表層形\t品詞,品詞細分類1,品詞細分類2,品詞細分類3,
             # 活用型,活用形,原形,読み,発音

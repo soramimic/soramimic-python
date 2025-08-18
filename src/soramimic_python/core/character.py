@@ -1,6 +1,8 @@
 import re
 from typing import Any
+
 import jaconv
+
 
 # ========= TokenFormatter =========
 class TokenFormatter:

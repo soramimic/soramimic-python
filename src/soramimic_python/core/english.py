@@ -1,5 +1,6 @@
 import re
 from typing import Any
+
 import neologdn
 from e2k import C2K, NGram
 
@@ -48,9 +49,7 @@ class English:
     def __init__(self):
         self.apostrophe = Apostrophe()
 
-    def _english_to_kana(
-        self, text: str
-    ) -> str:
+    def _english_to_kana(self, text: str) -> str:
         t = neologdn.normalize(text)
         if ngram(t):
             return c2k(t)

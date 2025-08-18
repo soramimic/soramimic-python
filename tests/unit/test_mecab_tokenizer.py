@@ -22,9 +22,7 @@ class TestMeCabTokenizer_ParseText:
         """助詞の発音が正しく変換されるかのテスト。"""
 
         # テストケース
-        test_cases = [
-            ("うさぎおいしかのやま", "ウサ*")
-        ]
+        test_cases = [("うさぎおいしかのやま", "ウサ*")]
 
         tokenizer = MeCabTokenizer()
         for text, expected in test_cases:

@@ -1,9 +1,23 @@
+from typing import TypedDict
+
+
+class SoramimiParameters(TypedDict, total=False):
+    repeat: int
+    splitter: str
+    duplicate: bool
+    same_phrase_break_reward: int
+    word_number_penalty: int
+    length: int
+
+
 class SoramimiMaker:
     def __init__(self, kana_similarity, text_analyzer):
         self.kana_similarity = kana_similarity
         self.text_analyzer = text_analyzer
 
-    def _assign_default_parameter(self, parameters):
+    def _assign_default_parameter(
+        self, parameters: SoramimiParameters
+    ) -> SoramimiParameters:
         default_parameter_values = {
             "repeat": 100,
             "splitter": "/",
@@ -54,16 +68,6 @@ class SoramimiMaker:
         words_list = list(words.values())
         words_list.sort(key=lambda x: x["sim"])
         return words_list
-
-    def _get_min(self, array, get_value):
-        min_val = float("inf")
-        content = None
-        for v in array:
-            val = get_value(v)
-            if val < min_val:
-                content = v
-                min_val = val
-        return content
 
     class _Memo:
         def __init__(self):
@@ -146,7 +150,7 @@ class SoramimiMaker:
                 memo.set(s, t, result)
                 return result
 
-            result = self._get_min(results, lambda v: v[0])
+            result = min(results, key=lambda v: v[0])
             memo.set(s, t, result)
             return result
 

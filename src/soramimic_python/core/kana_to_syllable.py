@@ -7,6 +7,10 @@
 import logging
 import re
 from itertools import product
+from typing import Literal
+
+import jaconv
+import jamorasep
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
@@ -44,19 +48,26 @@ def vowel_to_bar(text: str) -> str:
         変換後のテキスト
     """
 
-    def replace_func(match):
-        first = match.group(0)[0]
-        vowel = char_to_vowel(first)
-        res = match.group(0)
-        if (
-            vowel == match.group(0)[1]
-            or (vowel == "エ" and match.group(0)[1] == "イ")
-            or (vowel == "オ" and match.group(0)[1] == "ウ")
-        ):
-            res = first + "ー"
-        return res
+    moras = jamorasep.parse(text)
+    proccessed_moras = [moras[0]]
+    for mora in moras[1:]:
+        if mora in "アイウエオ":
+            prev_vowel = char_to_vowel(proccessed_moras[-1])
+            if (
+                (prev_vowel == "a"
+                and mora == "ア")
+                or (prev_vowel == "i" and mora == "イ")
+                or (prev_vowel == "u" and mora == "ウ")
+                or (prev_vowel == "e" and mora in ("イ", "エ"))
+                or (prev_vowel == "o" and mora in ("ウ", "オ"))
+            ):
+                proccessed_moras.append("ー")
+            else:
+                proccessed_moras.append(mora)
+        else:
+            proccessed_moras.append(mora)
 
-    return re.sub(r"[ァ-ンヴ][アイウエオ]", replace_func, text)
+    return "".join(proccessed_moras)
 
 
 def char_to_consonant(char: str) -> str:
@@ -68,30 +79,8 @@ def char_to_consonant(char: str) -> str:
     Returns:
         子音
     """
-    cols = {
-        "sp": "アイウエオヲーンッ",
-        "k": "カキクケコ",
-        "s": "サシスセソ",
-        "t": "タチツテト",
-        "n": "ナニヌネノ",
-        "h": "ハヒフヘホ",
-        "m": "マミムメモ",
-        "y": "ヤユヨ",
-        "r": "ラリルレロ",
-        "w": "ワ",
-        "g": "ガギグゲゴ",
-        "z": "ザジヂズゼゾ",
-        "d": "ダヅデド",
-        "b": "バビブヴベボ",
-        "p": "パピプペポ",
-    }
-
-    first = char[0] if char else ""
-    consonant = ""
-    for c, col in cols.items():
-        if first in col:
-            consonant = c
-            break
+    simpleipa = jamorasep.parse(char, output_format="simple-ipa")[0]
+    consonant = "".join(simpleipa[:-1])
     return consonant
 
 
@@ -140,13 +129,7 @@ def is_same_hatsuon(kana1: str, kana2: str) -> bool:
 
 def hira_to_kata(text: str) -> str:
     """ひらがなをカタカナに変換."""
-    result = ""
-    for char in text:
-        if "\u3041" <= char <= "\u3096":
-            result += chr(ord(char) + 0x60)
-        else:
-            result += char
-    return result
+    return jaconv.hira2kata(text)
 
 
 class KanaPattern:
@@ -204,7 +187,7 @@ class KanaPattern:
         }
 
 
-def char_to_vowel(char: str) -> str:
+def char_to_vowel(char: str) -> Literal["a", "i", "u", "e", "o", "N", "Q"]:
     """文字を母音に変換する.
 
     Args:
@@ -212,33 +195,16 @@ def char_to_vowel(char: str) -> str:
 
     Returns:
         母音
+
+    Raises:
+        ValueError: 無効な母音の場合
     """
-    if char == "ー":
-        logger.warning("warning: only ー is input")
-        return char
-
-    # 伸ばし棒を除いた末尾の文字を取得
-    last = ""
-    for i in range(len(char) - 1, -1, -1):
-        last = char[i]
-        if last != "ー":
-            break
-
-    rows = {
-        "ア": "アカサタナハマヤラワガザダバパァャヮ",
-        "イ": "イキシチニヒミリギジヂビピィ",
-        "ウ": "ウクスツヌフムユルグズヅブプヴゥュ",
-        "エ": "エケセテネヘメレゲゼデベペェ",
-        "オ": "オコソトノホモヨロゴゾドボポォ",
-        "sp": "ンッ",
-    }
-
-    vowel = last
-    for v, row in rows.items():
-        if last in row:
-            vowel = v
-            break
-    return vowel
+    simpleipa = jamorasep.parse(char, output_format="simple-ipa")[0]
+    vowel = simpleipa[-1]
+    if vowel not in ["a", "i", "u", "e", "o", "N", "Q", ":"]:
+        raise ValueError(f"Invalid vowel: {vowel}")
+    # 型チェッカーに対して安全性を保証
+    return vowel  # type: ignore[return-value]
 
 
 def small_vowel_to_bar(text: str) -> str:
@@ -250,16 +216,16 @@ def small_vowel_to_bar(text: str) -> str:
     Returns:
         変換後のテキスト
     """
-    # 長音のうしろの小文字母音を長音に
+    # 長音のうしろの小文字母音を削除
     replaced_text = re.sub(r"ー(ァ+|ィ+|ゥ+|ェ+|ォ+)", "ー", text)
 
     # 同じ母音のカナの後ろの小文字母音を長音に
     def replace_func(match):
         res = match.group(0)
-        l2s = {"ア": "ァ", "イ": "ィ", "ウ": "ゥ", "エ": "ェ", "オ": "ォ"}
+        l2s = {"a": "ァ", "i": "ィ", "u": "ゥ", "e": "ェ", "o": "ォ"}
         # 1文字目の母音が2文字目の小文字母音と対応していたら
         first_vowel = char_to_vowel(match.group(0)[0])
-        if first_vowel in l2s and l2s[first_vowel] == match.group(0)[1]:
+        if l2s.get(first_vowel, "") == match.group(0)[1]:
             res = match.group(0)[0] + "ー"
         # 上記以外の小文字母音の連続に対応
         elif len(match.group(0)) >= 3:
@@ -278,48 +244,11 @@ def small_vowel_to_large(text: str) -> str:
 
     Returns:
         変換後のテキスト
+
     """
-    s2l = {
-        "ァ": "ア",
-        "ィ": "イ",
-        "ゥ": "ウ",
-        "ェ": "エ",
-        "ォ": "オ",
-        "ヮ": "ワ",
-        "ャ": "ヤ",
-        "ュ": "ユ",
-        "ョ": "ヨ",
-    }
+    # jamorasepに独立した小文字カナを大文字にする機能があるため、単にこれを通すだけで良い。
+    replaced_text = "".join(jamorasep.parse(text))
 
-    # 先頭以外の置換
-    def replace_func(match):
-        match_text = match.group(0)
-        if (
-            re.match(r"[ウクスツヌフムユルグズヅブプヴ][ァヮォ]", match_text)
-            or re.match(r"[トド]ゥ", match_text)
-            or re.match(r"[キシチニヒミリギジヂビピテデ][ャュョ]", match_text)
-            or re.match(r"[ウクスツヌフムユルグズヅブプヴテデ]ィ", match_text)
-            or re.match(
-                r"[ウクスツヌフムユルグズヅブプヴイキシチニヒミリギジヂビピ]ェ",
-                match_text,
-            )
-        ):  # ウ段の後ろのァヮェォ
-            return match_text
-        else:
-            for small, large in s2l.items():
-                match_text = match_text.replace(small, large)
-            return match_text
-
-    replaced_text = re.sub(r".[ァィゥェォヮャュョ]", replace_func, text)
-
-    # 先頭の置換
-    def replace_head(match) -> str:
-        char = match.group(0)
-        return s2l[char] if char in s2l else char
-
-    replaced_text = re.sub(
-        r"^[ァィゥェォヮャュョ]", replace_head, replaced_text, flags=re.MULTILINE
-    )
     return replaced_text
 
 
@@ -362,28 +291,7 @@ def mora_split(text: str) -> list[str]:
     Returns:
         モーラ単位に分割されたリスト
     """
-    pattern = (
-        r"[ウクスツヌフムユルグズヅブプ][ァヮィェォ]|"
-        r"[キシチニヒミリギジヂビピテデ][ャュョ]|"
-        r"[イキシチニヒミリギジヂビピ]ェ|[テデ]ィ|[トド]ゥ|[ァ-ヴー]"
-    )
-    matches = re.findall(pattern, text)
-    return matches
-
-
-class KanaToMora:
-    """カナをモーラに変換するクラス."""
-
-    def __init__(self):
-        self.pattern = (
-            r"[ウクスツヌフムユルグズヅブプ][ァヮィェォ]|"
-            r"[キシチニヒミリギジヂビピテデ][ャュョ]|"
-            r"[イキシチニヒミリギジヂビピ]ェ|[テデ]ィ|[トド]ゥ|[ァ-ヴー]"
-        )
-
-    def split(self, text: str) -> list[str]:
-        """テキストをモーラ単位に分割."""
-        return re.findall(self.pattern, text)
+    return jamorasep.parse(text)
 
 
 class KanaToSyllable:
@@ -559,11 +467,6 @@ class KanaToSyllable:
         return filtered_combinations
 
 
-def zip_lists(list1: str, list2: str) -> list[tuple[str, str]]:
-    """2つの文字列を文字単位でペアにする."""
-    return list(zip(list1, list2, strict=False))
-
-
 def get_kana_to_vowel_dictionary(
     kana2phonon_dictionary: dict[str, list[str]],
 ) -> dict[str, str]:
@@ -578,7 +481,7 @@ def get_kana_to_vowel_dictionary(
     k2r = kana2phonon_dictionary
 
     # ローマ字母音をカタカナ母音にマッピング
-    roma2vowel = dict(zip_lists("aiueo", "アイウエオ"))
+    roma2vowel = dict(zip("aiueo", "アイウエオ", strict=False))
     roma2vowel["p"] = "sp"  # 無音
     roma2vowel["N"] = "sp"  # 撥音の母音は無音とする
     roma2vowel["q"] = "sp"  # 促音の母音は無音とする
@@ -850,7 +753,6 @@ def get_pronunciation_variation(syllables: list[str]) -> list[list[str]]:
 __all__ = [
     "KanaConverter",
     "KanaPattern",
-    "KanaToMora",
     "KanaToSyllable",
     "char_to_consonant",
     "char_to_vowel",
@@ -870,6 +772,7 @@ __all__ = [
     "separate",
     "small_vowel_to_bar",
     "small_vowel_to_large",
+    "vowel_to_bar",
 ]
 
 if __name__ == "__main__":

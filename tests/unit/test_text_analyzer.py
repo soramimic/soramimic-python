@@ -51,15 +51,36 @@ class TestTextAnalyzerGetYomiFromToken:
             result = _text_analyzer.get_yomi_from_tokens(tokens)
             assert result == expected
 
+
 class TestTextAnalyzerGetYomiAndPhraseBreak:
     def test_正常系_フレーズ分割が正しく行われる(self):
         """フレーズ分割が正しく行われるかのテスト。"""
 
         # テストケース
         test_cases = [
-            ("漢字", [
-                {'surface_form': '漢', 'token_index': 0, 'phrase': 0, 'pronunciation': 'カン', 'subword': 0, 'char_index': 0, 'mora': 0}, 
-                {'surface_form': '字', 'token_index': 0, 'phrase': 0, 'pronunciation': 'ジ', 'subword': 0, 'char_index': 1, 'mora': 1}]),
+            (
+                "漢字",
+                [
+                    {
+                        "surface_form": "漢",
+                        "token_index": 0,
+                        "phrase": 0,
+                        "pronunciation": "カン",
+                        "subword": 0,
+                        "char_index": 0,
+                        "mora": 0,
+                    },
+                    {
+                        "surface_form": "字",
+                        "token_index": 0,
+                        "phrase": 0,
+                        "pronunciation": "ジ",
+                        "subword": 0,
+                        "char_index": 1,
+                        "mora": 1,
+                    },
+                ],
+            ),
         ]
 
         for text, expected in test_cases:

@@ -7,23 +7,29 @@ class TestCharacterTokenize:
 
         # テストケース
         test_cases = [
-            ("漢字", [
-                {"surface_form": "漢", "pronunciation": "カ"},
-                {"surface_form": "漢", "pronunciation": "ン"},
-                {"surface_form": "字", "pronunciation": "ジ"},
-            ])
+            (
+                "漢字",
+                [
+                    {"surface_form": "漢", "pronunciation": "カ"},
+                    {"surface_form": "漢", "pronunciation": "ン"},
+                    {"surface_form": "字", "pronunciation": "ジ"},
+                ],
+            )
         ]
 
         for text, expected in test_cases:
             tokens = _text_analyzer.tokenize_together([text])[0]
 
             result = _character.tokenize(tokens)
-            
+
             # resultが少なくともexpectedのkeyを含むことをチェック
             assert len(result) == len(expected)
-            for actual_item, expected_item in zip(result, expected):
+            for actual_item, expected_item in zip(result, expected, strict=False):
                 for key, expected_value in expected_item.items():
-                    assert actual_item[key] == expected_value, f"Value mismatch for key '{key}': expected {expected_value}, got {actual_item[key]}"
+                    assert actual_item[key] == expected_value, (
+                        f"Value mismatch for key '{key}': expected {expected_value}, got {actual_item[key]}"
+                    )
+
     def test_正常系_ひらがな(self):
         """テキストが正しくトークン化されるかのテスト。"""
 
@@ -42,7 +48,7 @@ class TestCharacterTokenize:
                     {"surface_form": "の", "pronunciation": "ノ"},
                     {"surface_form": "や", "pronunciation": "ヤ"},
                     {"surface_form": "ま", "pronunciation": "マ"},
-                ]
+                ],
             )
         ]
 
@@ -50,9 +56,11 @@ class TestCharacterTokenize:
             tokens = _text_analyzer.tokenize_together([text])[0]
 
             result = _character.tokenize(tokens)
-            
+
             # resultが少なくともexpectedのkeyを含むことをチェック
             assert len(result) == len(expected)
-            for actual_item, expected_item in zip(result, expected):
+            for actual_item, expected_item in zip(result, expected, strict=False):
                 for key, expected_value in expected_item.items():
-                    assert actual_item[key] == expected_value, f"Value mismatch for key '{key}': expected {expected_value}, got {actual_item[key]}"
+                    assert actual_item[key] == expected_value, (
+                        f"Value mismatch for key '{key}': expected {expected_value}, got {actual_item[key]}"
+                    )
