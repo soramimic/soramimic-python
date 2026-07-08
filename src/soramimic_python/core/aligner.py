@@ -67,6 +67,6 @@ if __name__ == "__main__":
             return ed.eval(target, reference) + 0.0001*len(target)*len(reference)
     #aligner = BaseAligner(kanji_cost_func, [(2,2),(1,2),(1,0),(0,1),(1,1)])
     #print(aligner.align(tuple(jamorasep.parse("「庭」には２羽鶏がいる")), tuple(jamorasep.parse("にわにはにわにわとりがいる"))))
-    aligner = MoraAligner()
+    aligner = RubiAligner()
     print(aligner.align("庭には2羽鶏がいる", "ニワニワニワニワトリガイル"))
     print(aligner.align("庭には2羽鶏がいる", "ニワニワニワニワトリガイル")[1][0].target)

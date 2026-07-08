@@ -1,6 +1,7 @@
 import MeCab
 from typing import TypedDict
 from jphrase import PhraseSplitter
+import pyopenjtalk
 
 phrase_splitter = PhraseSplitter(output_type=PhraseSplitter.OUTPUT_DETAILED)
 

@@ -1,12 +1,12 @@
-import re
-from typing import Any
-
 import neologdn
+from soramimic_python.core.pronouncer.base import BasePronouncer
+
+import pyopenjtalk
 from e2k import C2K, NGram
+import re
 
 c2k = C2K()
 ngram = NGram()
-
 
 class Apostrophe:
     """
@@ -36,43 +36,15 @@ class Apostrophe:
     def format(self, text: str) -> str:
         # /[’]/g -> "'"
         return re.sub(r"[’]", "'", text)
+    
+class EnglishPronouncer(BasePronouncer):
 
+    def get_match_pattern_with_tag(self, tag: str) -> str:
+        return fr"(?P<{tag}>(?:[\p{{Latin}}']+))"
 
-class English:
-    """
-    JS English(DICTIONARY, TREE) を Python へ移植
-    - DICTIONARY: 英単語→カナ、かつ単文字 A..Z → カナ を含む dict を想定
-    - TREE: ローマ字→カナのトライ（ネスト dict; 葉は str カナ）
-    - tokenizer: .tokenize(str) -> List[dict(surface_form, pronunciation, ...)]
-    """
-
-    def __init__(self):
-        self.apostrophe = Apostrophe()
-
-    def _english_to_kana(self, text: str) -> str:
+    def pronounce(self, text: str) -> str:
         t = neologdn.normalize(text)
         if ngram(t):
             return c2k(t)
         else:
             return ngram.as_is(t)
-
-    def is_fullmatch(self, text: str) -> bool:
-        return re.fullmatch(r"[a-zA-Z']+", text) is not None
-
-    def to_kana(self, text: str) -> str:
-        return self._english_to_kana(text)
-
-
-if __name__ == "__main__":
-    # Example usage
-    english_dict = {"HELLO": "ハロー", "WORLD": "ワールド"}
-    roman_tree = {
-        "h": {"e": {"l": {"l": {"o": "ハロー"}}}},
-        "w": {"o": {"r": {"l": {"d": "ワールド"}}}},
-    }
-    english = English(english_dict, roman_tree)
-
-    text = "Hello World"
-    tokens = english._tokenize(text)
-    for token in tokens:
-        print(token)

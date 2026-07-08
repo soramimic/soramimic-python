@@ -161,77 +161,13 @@ class Kanji:
       各漢字に対応する読み候補（カタカナ）の配列（長い順でソート済みを想定）
     """
 
-    def __init__(self, dictionary: dict[str, list[str]]):
-        self.dictionary = dictionary
+    def __init__(self, dictionary: dict[str, list[str]] | None):
+        if dictionary is None:
+            self.dictionary = load_default_kanjidict()
+        else:
+            self.dictionary = dictionary
 
-    def _kanji_allocate(
-        self, surface: str, pronunciation: str, kanji_dict: dict[str, list[str]]
-    ) -> list[tuple[str, str]]:
-        rest_text = pronunciation
-        skipped_char = ""
-        output: list[tuple[str, str]] = []
-
-        for ch in surface:
-            if ch not in kanji_dict:
-                skipped_char += ch
-                continue
-
-            yomi_candidates = kanji_dict[ch]  # 長さ降順を想定
-            start = -1
-            yomi = ""
-            for y in yomi_candidates:
-                start = rest_text.find(y)
-                if start >= 0:
-                    yomi = y
-                    break
-
-            # マッチしないならスキップ
-            if start == -1:
-                skipped_char += ch
-                continue
-
-            if start > 0:
-                if not output:
-                    if skipped_char != "":
-                        output.append((skipped_char, rest_text[:start]))
-                        skipped_char = ""
-                        rest_text = rest_text[start:]
-                        output.append((ch, yomi))
-                        rest_text = rest_text[len(yomi) :]
-                    else:
-                        output.append((ch, rest_text[: start + len(yomi)]))
-                        rest_text = rest_text[start + len(yomi) :]
-                elif skipped_char != "":
-                    output.append((skipped_char, rest_text[:start]))
-                    skipped_char = ""
-                    rest_text = rest_text[start:]
-                    output.append((ch, yomi))
-                    rest_text = rest_text[len(yomi) :]
-                else:
-                    # 直前の要素の yomi に追加
-                    prev_s, prev_y = output[-1]
-                    output[-1] = (prev_s, prev_y + rest_text[:start])
-                    rest_text = rest_text[start:]
-                    output.append((ch, yomi))
-                    rest_text = rest_text[len(yomi) :]
-            else:
-                output.append((ch, yomi))
-                rest_text = rest_text[len(yomi) :]
-
-        # 末尾処理
-        if skipped_char != "":
-            if rest_text != "" or not output:
-                output.append((skipped_char, rest_text))
-            else:
-                prev_s, prev_y = output[-1]
-                output[-1] = (prev_s + skipped_char, prev_y)
-        elif rest_text != "" and output:
-            prev_s, prev_y = output[-1]
-            output[-1] = (prev_s, prev_y + rest_text)
-
-        return output
-
-    def _is_fullmatch(self, text: str) -> bool:
+    def is_fullmatch(self, text: str) -> bool:
         return re.match(r"^[一-龠]+$", text or "") is not None
 
     def to_kana(self, text: str) -> str:
@@ -241,9 +177,6 @@ class Kanji:
                 kana.append(self.dictionary[ch][0])
         return "".join(kana)
 
-    # 公開 API
-    def allocate(self, surface: str, pronunciation: str) -> list[tuple[str, str]]:
-        return self._kanji_allocate(surface, pronunciation, self.dictionary)
 
 
 # ========= Character =========

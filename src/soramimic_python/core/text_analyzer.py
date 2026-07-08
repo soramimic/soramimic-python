@@ -1,10 +1,12 @@
 import re
+import regex
 from collections.abc import Callable
 from typing import Any, TypedDict
 
 import jaconv
+import neologdn
 
-from soramimic_python.core.character import TokenFormatter, RubiAligner, join_silent_pairs
+from soramimic_python.core.character import TokenFormatter, RubiAligner, join_silent_pairs, Kanji
 from soramimic_python.core.mecab_tokenizer import split_to_phrases, MecabToken
 from soramimic_python.core.english import English
 
@@ -15,14 +17,46 @@ class Mora(TypedDict):
 
 rubi_aligner = RubiAligner()
 english = English()
+kanji = Kanji()
+
+
+def split_chunks(text: str):
+    """
+    カナ（ひらがな+カタカナ）、数字、アルファベット、漢字の塊を
+    入力順に [(種類, 文字列), ...] で返す。
+    「ヶ」「ヵ」は常に漢字扱い。
+    """
+    pattern = regex.compile(
+        r'(?P<kanji>(?:\p{Han}|ヶ|ヵ)+)|'         # 漢字 + 「ヶ」「ヵ」
+        r'(?P<number>\p{Nd}+)|'                   # 十進数字（全角含む）
+        r'(?P<alpha>\p{Latin}+)|'                 # ラテン文字（全角含む）
+        r'(?P<kana>\p{Katakana_Or_Hiragana}+)'    # ひらがな・カタカナ
+    )
+    out = []
+    for m in pattern.finditer(text):
+        for k, v in m.groupdict().items():
+            if v:
+                out.append((k, v))
+                break
+    return out
 
 def _convert_surface_to_pronunciation(surface: str) -> str:
-    # 表層形から発音を取得する処理
-    if english.is_fullmatch(surface):
-        return english.to_kana(surface)
-    surface_katakana = jaconv.hira2kata(surface)
-    # カタカナのみ抽出
-    pronunciation = re.sub(r"[^ァ-ヶー]", "", surface_katakana)
+    surface = neologdn.normalize(surface)
+    chunks = split_text_chunks_with_type(surface)
+    pronunciation = ""
+    for chunk_type, chunk_value in chunks:
+        if chunk_type == "kana":
+            # ひらがな・カタカナはそのまま
+            pronunciation += jaconv.hira2kata(chunk_value)
+        elif chunk_type == "number":
+            # 数字はそのまま
+            pronunciation += chunk_value
+        elif chunk_type == "alpha":
+            # アルファベットは英語変換
+            pronunciation += english._english_to_kana(chunk_value)
+        elif chunk_type == "kanji":
+            # 漢字は読みを取得
+            pronunciation += kanji.to_kana(chunk_value)
     return pronunciation
 
 def tokenize(text: str) -> list[Mora]:
@@ -111,27 +145,6 @@ class TextAnalyzer:
             # カタカナのみ抽出
             pronunciation = re.sub(r"[^ァ-ヶー]", "", pronunciation)
             return pronunciation
-    
-    def tokenize(self, text: str) -> list[Mora]:
-        AP = self.english.apostrophe
-        text = AP.to_string(text)
-        phrases = tokenize(text)
-        moras = []
-        for phrase in phrases:
-            is_phrase_start = True
-            for token in phrase:
-                # アポストロフィを戻す
-                token.surface = AP.to_sign(token.surface)
-                # 記号ではなく発音が未定義であれば、surfaceから発音を取得
-                if token.pos != "記号" and token.pronunciation and token.pronunciation != "*":
-                    pass
-                else:
-                    token.pronunciation = self._convert_surface_to_pronunciation(token.surface)
-                # phraseの区切りの定義
-
-                
-
-        return phrases
 
     def tokenize_together(self, texts: list[str]) -> list[list[MecabToken]]:
         AP = self.english.apostrophe

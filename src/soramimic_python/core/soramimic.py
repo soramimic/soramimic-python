@@ -1,5 +1,5 @@
 from typing import TypedDict
-
+from kanasim import create_kana_distance_calculator
 
 class SoramimiParameters(TypedDict, total=False):
     repeat: int
@@ -14,6 +14,7 @@ class SoramimiMaker:
     def __init__(self, kana_similarity, text_analyzer):
         self.kana_similarity = kana_similarity
         self.text_analyzer = text_analyzer
+        self.kana_distance_calculator = create_kana_distance_calculator()
 
     def _assign_default_parameter(
         self, parameters: SoramimiParameters
@@ -42,7 +43,13 @@ class SoramimiMaker:
                 return float("inf")
         return score
 
-    def _get_similar_word(self, word_list, target, kana_dist, length=1):
+    def _get_similar_word(self, word_list, target: list[str]):
+        target_length = sum(1 for x in target if x not in ("ン", "ッ"))
+        words = word_list.get(target_length, [])
+        topn_words = self.kana_distance_calculator.get_topn("".join(target), words, 100)
+        return topn_words
+        for t in target:
+            if not 
         tmp = self.text_analyzer.syllable_to_variation(target)
         candidates = {}
         for c in tmp:
@@ -156,7 +163,7 @@ class SoramimiMaker:
 
         return dp(0, len(target))
 
-    def generate(self, phrases, word_list, parameter, update_func, end_func):
+    def generate(self, lines, word_list, parameter, update_func, end_func):
         param = self._assign_default_parameter(parameter)
 
         def gs(target):
@@ -170,7 +177,7 @@ class SoramimiMaker:
             gs.memo[joined_target] = result
             return result
 
-        tokens_list = self.text_analyzer.tokenize_together(phrases)
+        phrases_list = self.text_analyzer.tokenize_together(lines)
         tokenized_phrases = [
             self.text_analyzer.get_yomi_and_phrase_break(v) for v in tokens_list
         ]
