@@ -1,180 +1,55 @@
 [project]
-name = "soramimic-python"
-dynamic = ["version"]
-description = "A modern Python project template optimized for Claude Code with strict guardrails"
+name = "soramimic"
+version = "0.1.0"
+description = "Soramimi (phonetic parody) lyrics generator — Python port of the Soramimic engine"
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    # 主要な依存関係をここに記載
-    "structlog>=25.4.0",
-    "rich>=13.7.0", # structlogのカラフルなコンソール出力用
-    "pydantic>=2.11.7",
-    "kanasim>=0.0.4",
-    "pandas>=2.3.1",
-    "jamorasep>=0.0.1",
-    "jphrase>=0.0.3",
-    "ipadic>=1.0.0",
-    "mecab-python3>=1.0.10",
-    "jaconv>=0.4.0",
-    "pykakasi>=2.3.0",
-    "e2k>=0.6.2",
-    "neologdn>=0.5.4",
-    "english2kana>=0.1.5",
-    "editdistance>=0.8.1",
-    "regex>=2025.7.34",
+license = "MIT"
+authors = [{ name = "Jiro Shimaya" }]
+requires-python = ">=3.10"
+dependencies = []
+keywords = ["soramimi", "japanese", "lyrics", "phonetics", "nlp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Natural Language :: Japanese",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Linguistic",
 ]
 
-[build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
+[project.urls]
+Repository = "https://github.com/soramimic/soramimic-python"
+Issues = "https://github.com/soramimic/soramimic-python/issues"
 
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.build.targets.wheel]
-# TODO: 実際のプロジェクトでは "src/your_package_name" に更新してください
-packages = ["src/soramimic_python"]  # テンプレート用の空パッケージ
-
-[tool.ruff]
-line-length = 88
-indent-width = 4
-target-version = "py312"
-
-[tool.ruff.lint]
-exclude = [".venv", "template"]
-select = [
-    "E",      # pycodestyle errors
-    "W",      # pycodestyle warnings
-    "F",      # pyflakes
-    "I",      # isort
-    "UP",     # pyupgrade
-    "B",      # flake8-bugbear
-    "SIM",    # flake8-simplify
-    "RUF",    # Ruff-specific rules
-    "TCH",    # flake8-type-checking
-    "PTH",    # flake8-use-pathlib
-    "PL",     # Pylint
-]
-ignore = [
-    "G004",
-    "F821",
-    "C401",
-    "C408",
-    "RUF001",
-    "RUF002",
-    "RUF003",
-    "ANN101",
-    "ANN102",
-    "PERF203",
-    "PERF401",
-    "PLR2004",
-    "PLC2401",
-    "PLR0912",  # Too many branches
-    "PLR0915",  # Too many statements  
-    "PLR0911",  # Too many return statements
-    "SIM401",   # Use dict.get instead of if block
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["PLR2004", "PLR0913"]  # テストでは magic number とパラメータ数を許可
-
-[tool.pyright]
-include = ["src"]
-exclude = [".venv", "**/__pycache__", "template", "tests", "manual_tests"]
-pythonVersion = "3.12"
-pythonPlatform = "All"
-typeCheckingMode = "basic"
-
-# Type checking behavior
-strictParameterNoneValue = false
-
-# 重要なエラー（必ずエラーとして報告）
-reportMissingImports = "error"
-reportIncompatibleMethodOverride = "error"
-reportIncompatibleVariableOverride = "error"
-reportOverlappingOverload = "error"
-reportUnusedCoroutine = "error"
-reportMatchNotExhaustive = "error"
-reportUnusedImport = "error"
-reportDuplicateImport = "error"
-
-# 開発時に役立つ警告レベル
-reportUnusedClass = "warning"
-reportUnusedFunction = "warning"
-reportUnusedVariable = "warning"
-reportInconsistentConstructor = "warning"
-reportUninitializedInstanceVariable = "warning"
-reportUnnecessaryIsInstance = "warning"
-reportUnnecessaryCast = "warning"
-reportUnnecessaryComparison = "warning"
-reportUnnecessaryTypeIgnoreComment = "warning"
-
-# 開発を妨げない程度に無効化
-reportCallIssue = "none"
-reportAttributeAccessIssue = "none"
-reportMissingTypeStubs = "none"
-reportMissingSuperCall = "none"
-reportPrivateUsage = "none"
-reportImplicitStringConcatenation = "none"
-reportInvalidStubStatement = "none"
-reportIncompleteStub = "none"
-reportUnsupportedDunderAll = "none"
-
-[tool.bandit]
-exclude_dirs = ["tests", ".venv", "template"]
-skips = ["B101"]  # Skip assert_used test
-
-[tool.pytest.ini_options]
-testpaths = ["tests", "manual_tests"]
-python_files = ["test_*.py", "*_test.py"]
-addopts = [
-    "-ra",
-    "--strict-markers",
-    "--strict-config",
-    "--ignore=template",
-]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-]
+[project.optional-dependencies]
+mecab = ["fugashi>=1.3", "ipadic>=1.0"]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.0",
-    "ruff>=0.4.0",
-    "pre-commit>=3.7.0",
-    "bandit>=1.7.0",
-    "pip-audit>=2.6.0",
-    "taskipy>=1.14.1",
-    "pyright>=1.1.403",
-]
-docs = [
-    "sphinx>=7.0.0",
-    "sphinx-rtd-theme>=2.0.0",
-    "sphinx-autodoc-typehints>=2.0.0",
-    "myst-parser>=2.0.0",
+    "pytest>=8",
+    "ruff>=0.8",
+    "mypy>=1.13",
 ]
 
+[build-system]
+requires = ["uv_build>=0.7.19,<0.9"]
+build-backend = "uv_build"
 
-# =====================
-# taskipy タスク定義
-# =====================
-[tool.taskipy.tasks]
-clean = """
-  find . -type d -name '__pycache__' -exec rm -rf {} + &&
-  find . -type f -name '*.pyc' -delete &&
-  find . -type d -name '.pytest_cache' -exec rm -rf {} + &&
-  find . -type d -name '.pyright_cache' -exec rm -rf {} + &&
-  find . -type d -name '.ruff_cache' -exec rm -rf {} + &&
-  find . -type d -name 'htmlcov' -exec rm -rf {} + &&
-  find . -type f -name '.coverage' -delete &&
-  rm -rf dist build
-"""
-help = "echo '利用可能なタスク: clean, check, help (task [name] で実行)'"
-check-all = """
-  ARGS="${args:-.}"
-  uv run ruff format $ARGS
-  uv run ruff check $ARGS --fix
-  uv run pyright $ARGS
-  uv run pytest $ARGS
-"""
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    "E501", # 移植元JSとの対応を優先し長い行を許容
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = false

@@ -1,20 +1,21 @@
-注意：テンプレートとして使用される場合、このファイル（README.md）はリポジトリの実態に即した内容に書き換えられます。
+# soramimic
 
-# Python Template for AI assistant
+空耳(替え歌)歌詞を自動生成する [Soramimic](https://soramimic.com) エンジンの Python ライブラリです。
+本体( soramimic/soramimic の `frontend/src/lib` )と挙動互換の移植です。
 
-AIアシスタント（Claude CodeやGitHub Copilot）との協働に最適化されたPythonプロジェクトテンプレートです。適度な型チェック、AIアシスタントのパフォーマンスを引き出すための包括的なドキュメントなどを備えています。
+> 開発中(0.x)。API は変わる可能性があります。
 
-以下のコマンドで初期化してください。
+## インストール
 
 ```bash
-sh scripts/setup.sh
+pip install soramimic          # コア(トークナイザなし)
+pip install "soramimic[mecab]" # fugashi + ipadic トークナイザ込み
 ```
 
-詳細は[CLAUDE.md](CLAUDE.md)をご覧ください。
+## 使い方
 
-このテンプレートは[discus0434/python-template-for-claude-code](https://github.com/discus0434/python-template-for-claude-code)を基に作成されました。
-有益なリポジトリを公開いただき感謝します。
+準備中。
 
-## 📄 ライセンス
+## License
 
-このテンプレートはMITライセンスの下でリリースされています。詳細は[LICENSE](LICENSE)をご覧ください。
+MIT。同梱の英語発音データ( `english-kana.json` )は CMUdict 由来です( `src/soramimic/data/english-kana.LICENSE` 参照)。
