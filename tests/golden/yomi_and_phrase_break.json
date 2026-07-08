@@ -1,0 +1,491 @@
+{
+ "input": [
+  [
+   {
+    "surface_form": "夜",
+    "basic_form": "夜",
+    "reading": "ヨル",
+    "pronunciation": "ヨル",
+    "pos": "名詞",
+    "pos_detail_1": "一般",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 0
+   },
+   {
+    "surface_form": "の",
+    "basic_form": "の",
+    "reading": "ノ",
+    "pronunciation": "ノ",
+    "pos": "助詞",
+    "pos_detail_1": "連体化",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 0
+   },
+   {
+    "surface_form": "街",
+    "basic_form": "街",
+    "reading": "マチ",
+    "pronunciation": "マチ",
+    "pos": "名詞",
+    "pos_detail_1": "一般",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 1
+   },
+   {
+    "surface_form": "を",
+    "basic_form": "を",
+    "reading": "ヲ",
+    "pronunciation": "ヲ",
+    "pos": "助詞",
+    "pos_detail_1": "格助詞",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 1
+   },
+   {
+    "surface_form": "駆け抜ける",
+    "basic_form": "駆け抜ける",
+    "reading": "カケヌケル",
+    "pronunciation": "カケヌケル",
+    "pos": "動詞",
+    "pos_detail_1": "自立",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 2
+   }
+  ],
+  [
+   {
+    "surface_form": "love",
+    "basic_form": "love",
+    "reading": "*",
+    "pronunciation": "ラヴ",
+    "pos": "名詞",
+    "pos_detail_1": "固有名詞",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 0
+   },
+   {
+    "surface_form": "を",
+    "basic_form": "を",
+    "reading": "ヲ",
+    "pronunciation": "ヲ",
+    "pos": "助詞",
+    "pos_detail_1": "格助詞",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 0
+   },
+   {
+    "surface_form": "叫ぶ",
+    "basic_form": "叫ぶ",
+    "reading": "サケブ",
+    "pronunciation": "サケブ",
+    "pos": "動詞",
+    "pos_detail_1": "自立",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 1
+   }
+  ],
+  [
+   {
+    "surface_form": "ぴえんー",
+    "basic_form": "ぴえん",
+    "reading": "*",
+    "pronunciation": "ピエンー",
+    "pos": "名詞",
+    "pos_detail_1": "一般",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 0
+   },
+   {
+    "surface_form": "!",
+    "basic_form": "!",
+    "reading": "!",
+    "pronunciation": "!",
+    "pos": "記号",
+    "pos_detail_1": "一般",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 0
+   },
+   {
+    "surface_form": "超",
+    "basic_form": "超",
+    "reading": "チョウ",
+    "pronunciation": "チョー",
+    "pos": "接頭詞",
+    "pos_detail_1": "名詞接続",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 0
+   },
+   {
+    "surface_form": "えもい",
+    "basic_form": "えもい",
+    "reading": "*",
+    "pronunciation": "エモイ",
+    "pos": "形容詞",
+    "pos_detail_1": "自立",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 1
+   }
+  ],
+  [
+   {
+    "surface_form": "1",
+    "basic_form": "1",
+    "reading": "*",
+    "pronunciation": "イチ",
+    "pos": "名詞",
+    "pos_detail_1": "数",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 0
+   },
+   {
+    "surface_form": "じ",
+    "basic_form": "じ",
+    "reading": "ジ",
+    "pronunciation": "ジ",
+    "pos": "名詞",
+    "pos_detail_1": "接尾",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 1
+   },
+   {
+    "surface_form": "に",
+    "basic_form": "に",
+    "reading": "ニ",
+    "pronunciation": "ニ",
+    "pos": "助詞",
+    "pos_detail_1": "格助詞",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 1
+   },
+   {
+    "surface_form": "あっ",
+    "basic_form": "あ",
+    "reading": "ア",
+    "pronunciation": "アッ",
+    "pos": "感動詞",
+    "pos_detail_1": "*",
+    "pos_detail_2": "*",
+    "pos_detail_3": "*",
+    "conjugated_form": "*",
+    "conjugated_type": "*",
+    "phrase": 2
+   }
+  ]
+ ],
+ "output": [
+  [
+   {
+    "surface_form": "夜",
+    "token_index": 0,
+    "phrase": 0,
+    "pronunciation": "ヨ",
+    "subword": 0,
+    "char_index": 0,
+    "mora": 0
+   },
+   {
+    "surface_form": "",
+    "token_index": 0,
+    "phrase": 0,
+    "pronunciation": "ル",
+    "subword": 0,
+    "char_index": 0,
+    "mora": 1
+   },
+   {
+    "surface_form": "の",
+    "token_index": 1,
+    "phrase": 0,
+    "pronunciation": "ノ",
+    "subword": 1,
+    "char_index": 1,
+    "mora": 2
+   },
+   {
+    "surface_form": "街",
+    "token_index": 2,
+    "phrase": 1,
+    "pronunciation": "マ",
+    "subword": 2,
+    "char_index": 2,
+    "mora": 3
+   },
+   {
+    "surface_form": "",
+    "token_index": 2,
+    "phrase": 1,
+    "pronunciation": "チ",
+    "subword": 2,
+    "char_index": 2,
+    "mora": 4
+   },
+   {
+    "surface_form": "を",
+    "token_index": 3,
+    "phrase": 1,
+    "pronunciation": "ヲ",
+    "subword": 3,
+    "char_index": 3,
+    "mora": 5
+   },
+   {
+    "surface_form": "駆",
+    "token_index": 4,
+    "phrase": 2,
+    "pronunciation": "カ",
+    "subword": 4,
+    "char_index": 4,
+    "mora": 6
+   },
+   {
+    "surface_form": "け",
+    "token_index": 4,
+    "phrase": 2,
+    "pronunciation": "ケ",
+    "subword": 5,
+    "char_index": 5,
+    "mora": 7
+   },
+   {
+    "surface_form": "抜",
+    "token_index": 4,
+    "phrase": 2,
+    "pronunciation": "ヌ",
+    "subword": 6,
+    "char_index": 6,
+    "mora": 8
+   },
+   {
+    "surface_form": "け",
+    "token_index": 4,
+    "phrase": 2,
+    "pronunciation": "ケ",
+    "subword": 7,
+    "char_index": 7,
+    "mora": 9
+   },
+   {
+    "surface_form": "る",
+    "token_index": 4,
+    "phrase": 2,
+    "pronunciation": "ル",
+    "subword": 7,
+    "char_index": 8,
+    "mora": 10
+   }
+  ],
+  [
+   {
+    "surface_form": "lo",
+    "token_index": 0,
+    "phrase": 0,
+    "pronunciation": "ラ",
+    "subword": 0,
+    "char_index": 0,
+    "mora": 0
+   },
+   {
+    "surface_form": "ve",
+    "token_index": 0,
+    "phrase": 0,
+    "pronunciation": "ヴ",
+    "subword": 0,
+    "char_index": 1,
+    "mora": 1
+   },
+   {
+    "surface_form": "を",
+    "token_index": 1,
+    "phrase": 0,
+    "pronunciation": "ヲ",
+    "subword": 1,
+    "char_index": 2,
+    "mora": 2
+   },
+   {
+    "surface_form": "叫",
+    "token_index": 2,
+    "phrase": 1,
+    "pronunciation": "サ",
+    "subword": 2,
+    "char_index": 3,
+    "mora": 3
+   },
+   {
+    "surface_form": "",
+    "token_index": 2,
+    "phrase": 1,
+    "pronunciation": "ケ",
+    "subword": 2,
+    "char_index": 3,
+    "mora": 4
+   },
+   {
+    "surface_form": "ぶ",
+    "token_index": 2,
+    "phrase": 1,
+    "pronunciation": "ブ",
+    "subword": 3,
+    "char_index": 4,
+    "mora": 5
+   }
+  ],
+  [
+   {
+    "surface_form": "ぴ",
+    "token_index": 0,
+    "phrase": 0,
+    "pronunciation": "ピ",
+    "subword": 0,
+    "char_index": 0,
+    "mora": 0
+   },
+   {
+    "surface_form": "え",
+    "token_index": 0,
+    "phrase": 0,
+    "pronunciation": "エ",
+    "subword": 0,
+    "char_index": 1,
+    "mora": 1
+   },
+   {
+    "surface_form": "んー!",
+    "token_index": 0,
+    "phrase": 0,
+    "pronunciation": "ンー",
+    "subword": 0,
+    "char_index": 2,
+    "mora": 2
+   },
+   {
+    "surface_form": "超",
+    "token_index": 2,
+    "phrase": 0,
+    "pronunciation": "チョー",
+    "subword": 2,
+    "char_index": 5,
+    "mora": 3
+   },
+   {
+    "surface_form": "え",
+    "token_index": 3,
+    "phrase": 1,
+    "pronunciation": "エ",
+    "subword": 3,
+    "char_index": 6,
+    "mora": 4
+   },
+   {
+    "surface_form": "も",
+    "token_index": 3,
+    "phrase": 1,
+    "pronunciation": "モ",
+    "subword": 3,
+    "char_index": 7,
+    "mora": 5
+   },
+   {
+    "surface_form": "い",
+    "token_index": 3,
+    "phrase": 1,
+    "pronunciation": "イ",
+    "subword": 3,
+    "char_index": 8,
+    "mora": 6
+   }
+  ],
+  [
+   {
+    "surface_form": "1",
+    "token_index": 0,
+    "phrase": 0,
+    "pronunciation": "イ",
+    "subword": 0,
+    "char_index": 0,
+    "mora": 0
+   },
+   {
+    "surface_form": "",
+    "token_index": 0,
+    "phrase": 0,
+    "pronunciation": "チ",
+    "subword": 0,
+    "char_index": 0,
+    "mora": 1
+   },
+   {
+    "surface_form": "じ",
+    "token_index": 1,
+    "phrase": 1,
+    "pronunciation": "ジ",
+    "subword": 1,
+    "char_index": 1,
+    "mora": 2
+   },
+   {
+    "surface_form": "に",
+    "token_index": 2,
+    "phrase": 1,
+    "pronunciation": "ニ",
+    "subword": 2,
+    "char_index": 2,
+    "mora": 3
+   },
+   {
+    "surface_form": "あっ",
+    "token_index": 3,
+    "phrase": 2,
+    "pronunciation": "アッ",
+    "subword": 3,
+    "char_index": 3,
+    "mora": 4
+   }
+  ]
+ ]
+}

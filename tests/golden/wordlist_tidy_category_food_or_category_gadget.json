@@ -1,0 +1,76 @@
+{
+ "input": "id,original,surface,pronunciation,category\n1,山手線,山手線,ヤマノテセン,station\n2,秋葉原,秋葉原,アキハバラ,station\n3,カレー,カレー,NA,food\n4,ラーメン,ラーメン,ラーメン,food\n5,ぎょうざ,ぎょうざ,ギョーザ,food\n6,パソコン,パソコン,パソコン,gadget",
+ "where": "category = food or category = gadget",
+ "output": {
+  "2": [
+   {
+    "surface": "カレー",
+    "pronunciation": [
+     "カ",
+     "レー"
+    ],
+    "kana": "カレー",
+    "id": "3",
+    "original": "カレー"
+   },
+   {
+    "surface": "ラーメン",
+    "pronunciation": [
+     "ラー",
+     "メー"
+    ],
+    "kana": "ラーメン",
+    "id": "4",
+    "original": "ラーメン"
+   },
+   {
+    "surface": "ぎょうざ",
+    "pronunciation": [
+     "ギョー",
+     "ザ"
+    ],
+    "kana": "ギョーザ",
+    "id": "5",
+    "original": "ぎょうざ"
+   }
+  ],
+  "3": [
+   {
+    "surface": "ラーメン",
+    "pronunciation": [
+     "ラー",
+     "メ",
+     "ン"
+    ],
+    "kana": "ラーメン",
+    "id": "4",
+    "original": "ラーメン"
+   },
+   {
+    "surface": "パソコン",
+    "pronunciation": [
+     "パ",
+     "ソ",
+     "コー"
+    ],
+    "kana": "パソコン",
+    "id": "6",
+    "original": "パソコン"
+   }
+  ],
+  "4": [
+   {
+    "surface": "パソコン",
+    "pronunciation": [
+     "パ",
+     "ソ",
+     "コ",
+     "ン"
+    ],
+    "kana": "パソコン",
+    "id": "6",
+    "original": "パソコン"
+   }
+  ]
+ }
+}
