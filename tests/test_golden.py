@@ -110,6 +110,7 @@ def test_wordlist_plain(app):
         "wordlist_tidy_category_food.json",
         "wordlist_tidy_category_food_or_category_gadget.json",
         "wordlist_tidy_category_station.json",
+        "wordlist_tidy_no_pronunciation.json",
     ],
 )
 def test_wordlist_tidy(app, name):

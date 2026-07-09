@@ -162,6 +162,21 @@ const plainText = [
 const plainDb = wordList.parsePlain(plainText);
 writeFileSync(join(OUTDIR, "wordlist_plain.json"), JSON.stringify({ input: plainText, output: plainDb }, null, 1));
 
+// pronunciation列が無いCSV(nations.csv形式): surface代用フォールバックの互換確認
+const tidyCsvNoPron = [
+  "id,original,surface,status",
+  "0,アフガニスタン,アフガニスタン,current",
+  "1,ニッポン,ニッポン,current",
+  "2,ソビエト,ソビエト,former",
+].join("\n");
+{
+  const db = wordList.parseTidy(tidyCsvNoPron, "status = current");
+  writeFileSync(
+    join(OUTDIR, "wordlist_tidy_no_pronunciation.json"),
+    JSON.stringify({ input: tidyCsvNoPron, where: "status = current", output: db }, null, 1)
+  );
+}
+
 const tidyCsv = [
   "id,original,surface,pronunciation,category",
   "1,山手線,山手線,ヤマノテセン,station",

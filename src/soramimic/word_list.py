@@ -172,9 +172,13 @@ class WordList:
         for i in range(len(header)):
             h2i[header[i]] = i
 
+        # JSでは pronunciation 列が無いCSVでも v[h2i["pronunciation"]] が undefined に
+        # なり surface 代用にフォールバックする(nations.csv等)。列欠落のみ再現し、
+        # 行が header より短いケースはJSも落ちるので救済しない
+        p_idx = h2i.get("pronunciation")
         pronunciations: list[str] = []
         for v in filtered_df:
-            p = v[h2i["pronunciation"]]
+            p = v[p_idx] if p_idx is not None and p_idx < len(v) else None
             if (not p) or p == "NA" or p == "na":
                 p = v[h2i["surface"]]
             pronunciations.append(p)

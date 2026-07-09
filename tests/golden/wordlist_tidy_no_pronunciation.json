@@ -1,0 +1,89 @@
+{
+ "input": "id,original,surface,status\n0,アフガニスタン,アフガニスタン,current\n1,ニッポン,ニッポン,current\n2,ソビエト,ソビエト,former",
+ "where": "status = current",
+ "output": {
+  "2": [
+   {
+    "surface": "ニッポン",
+    "pronunciation": [
+     "ニ",
+     "ポー"
+    ],
+    "kana": "ニッポン",
+    "id": "1",
+    "original": "ニッポン"
+   }
+  ],
+  "3": [
+   {
+    "surface": "ニッポン",
+    "pronunciation": [
+     "ニ",
+     "ッ",
+     "ポー"
+    ],
+    "kana": "ニッポン",
+    "id": "1",
+    "original": "ニッポン"
+   },
+   {
+    "surface": "ニッポン",
+    "pronunciation": [
+     "ニ",
+     "ポ",
+     "ン"
+    ],
+    "kana": "ニッポン",
+    "id": "1",
+    "original": "ニッポン"
+   }
+  ],
+  "4": [
+   {
+    "surface": "ニッポン",
+    "pronunciation": [
+     "ニ",
+     "ッ",
+     "ポ",
+     "ン"
+    ],
+    "kana": "ニッポン",
+    "id": "1",
+    "original": "ニッポン"
+   }
+  ],
+  "6": [
+   {
+    "surface": "アフガニスタン",
+    "pronunciation": [
+     "ア",
+     "フ",
+     "ガ",
+     "ニ",
+     "ス",
+     "ター"
+    ],
+    "kana": "アフガニスタン",
+    "id": "0",
+    "original": "アフガニスタン"
+   }
+  ],
+  "7": [
+   {
+    "surface": "アフガニスタン",
+    "pronunciation": [
+     "ア",
+     "フ",
+     "ガ",
+     "ニ",
+     "ス",
+     "タ",
+     "ン"
+    ],
+    "kana": "アフガニスタン",
+    "id": "0",
+    "original": "アフガニスタン"
+   }
+  ]
+ }
+}

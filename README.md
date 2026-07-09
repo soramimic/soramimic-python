@@ -25,22 +25,20 @@ app = create_soramimic(
     get_yomi=tok.get_yomi,
 )
 
-# 単語リスト: tidy CSV (soramimic-wordlists 形式) または1行1語のプレーンテキスト
-csv = """id,original,surface,pronunciation
-1,ヨーグルト,ヨーグルト,ヨーグルト
-2,ケーキ,ケーキ,ケーキ
-3,カケル,カケル,カケル
-4,ヨル,ヨル,ヨル
-5,マチ,マチ,マチ
-6,オー,オー,オー
-"""
-db = app.word_list.parse_tidy(csv, "")  # 第2引数はwhere式 (例: "category = food")
+# 単語リスト: tidy CSV (soramimic-wordlists 形式) または1行1語のプレーンテキスト。
+# 試しやすいようにサンプル(nations=国名, sekitsui=脊椎動物, stations=駅名)を同梱している
+from soramimic import load_sample_wordlist
+
+db = app.word_list.parse_tidy(load_sample_wordlist("nations"), "")  # 第2引数はwhere式
 
 results = app.soramimi_maker.generate(["夜の街を駆け抜ける"], db, {})
 for line in results:
     print(" / ".join(w["surface"] for w in line))
-# => ヨル / オー / マチ / オー / カケル / ケーキ
+# => ヨルダン / マリ / オマーン / ペルー / ペルー
 ```
+
+自前の単語リストを使う場合は同形式のCSVテキストを `parse_tidy` に渡します。
+同梱サンプルは権利上の配慮から事実データ(国名・生物名・駅名)のみです。
 
 トークナイザは差し替え可能です( `soramimic.tokenizer.Tokenizer` プロトコル参照)。
 kuromoji.js 互換のトークン dict( `surface_form` / `pronunciation` / `pos` …、未知語は `"*"` )を返せば何でも使えます。
