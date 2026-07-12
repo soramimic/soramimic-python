@@ -81,3 +81,53 @@ def test_parser_filter_unknown_key_returns_false() -> None:
     header = ["id", "surface"]
     df = [["1", "ネコ"]]
     assert p.filter("pos = animal", header, df) is False
+
+
+def test_parser_eval_contains() -> None:
+    p = Parser()
+    # スラッシュ区切りの複数値セルに対する部分一致
+    assert p.eval("field ~= 物理", {"field": "物理/数学"}) is True
+    assert p.eval("field ~= 数学", {"field": "物理/数学"}) is True
+    assert p.eval("field ~= 化学", {"field": "物理/数学"}) is False
+    # 演算子の間にスペースが無くてもトークナイズできる(field~=物理 形式)
+    assert p.eval("field~=物理", {"field": "物理/数学"}) is True
+    # 否定
+    assert p.eval("field !~= 化学", {"field": "物理/数学"}) is True
+    assert p.eval("field !~= 物理", {"field": "物理/数学"}) is False
+    # 値が存在しない(undefined)場合は空文字扱い
+    assert p.eval("field ~= 物理", {"other": "x"}) is False
+    assert p.eval("field !~= 物理", {"other": "x"}) is True
+    # 既存 =/!= や and/or/括弧 との組み合わせ
+    obj = {"field": "物理/数学", "era": "近代"}
+    assert p.eval("field ~= 物理 and era = 近代", obj) is True
+    assert p.eval("field ~= 物理 and era = 現代", obj) is False
+    assert p.eval("(field ~= 化学 or field ~= 数学) and era != 現代", obj) is True
+
+
+def test_parse_tidy_where_contains(pieces: dict[str, Any]) -> None:
+    wl = pieces["word_list"]
+    csv = (
+        "id,original,surface,pronunciation,field\n"
+        "1,ニュートン,ニュートン,ニュートン,物理/数学\n"
+        "2,ガウス,ガウス,ガウス,数学\n"
+        "3,ラボアジエ,ラボアジエ,ラボアジエ,化学"
+    )
+    # field~=物理 形式(スペースなし)。物理を含むのはニュートンのみ
+    db = wl.parse_tidy(csv, "field~=物理")
+    surfaces = {w["surface"] for bucket in db.values() for w in bucket}
+    assert surfaces == {"ニュートン"}
+
+    # 数学を含むのは ニュートン(物理/数学) と ガウス
+    db2 = wl.parse_tidy(csv, "field ~= 数学")
+    surfaces2 = {w["surface"] for bucket in db2.values() for w in bucket}
+    assert surfaces2 == {"ニュートン", "ガウス"}
+
+    # 否定: 数学を含まないのは ラボアジエ のみ
+    db3 = wl.parse_tidy(csv, "field !~= 数学")
+    surfaces3 = {w["surface"] for bucket in db3.values() for w in bucket}
+    assert surfaces3 == {"ラボアジエ"}
+
+    # =/!= との組み合わせ
+    db4 = wl.parse_tidy(csv, "field ~= 数学 and id != 1")
+    surfaces4 = {w["surface"] for bucket in db4.values() for w in bucket}
+    assert surfaces4 == {"ガウス"}
