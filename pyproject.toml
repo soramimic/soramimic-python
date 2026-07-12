@@ -1,6 +1,6 @@
 [project]
 name = "soramimic"
-version = "0.1.1"
+version = "0.1.2"
 description = "Soramimi (phonetic parody) lyrics generator — Python port of the Soramimic engine"
 readme = "README.md"
 license = "MIT"

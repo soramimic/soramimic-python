@@ -1,7 +1,8 @@
 # 移植元: frontend/src/lib/wordList.js
 """wordList.js からの移植(ロジック無改変)。
 
-Parser: where式(``key = value`` / ``!=`` / and / or / 括弧)の評価とフィルタ。
+Parser: where式(``key = value`` / ``!=`` / ``~=`` 部分一致 / ``!~=`` / and / or / 括弧)
+の評価とフィルタ。
 WordList: CSV/plain テキストから、発音バリエーションの長さをキーにした単語DBを構築する。
 
 デッドコード(loadDatabaseTextWithMeCab、loadDatabaseText 内の return 後の到達不能
@@ -23,7 +24,8 @@ class Parser:
 
     @staticmethod
     def _tokenize(query_str: str) -> list[str]:
-        query_str = re.sub(r"!=|=|\(|\)", lambda m: " " + m.group(0) + " ", query_str)
+        # 長い演算子から順にマッチさせる(!~= / ~= / != / =)
+        query_str = re.sub(r"!~=|~=|!=|=|\(|\)", lambda m: " " + m.group(0) + " ", query_str)
         query_str = query_str.strip()
         return re.split(r"\s+", query_str)
 
@@ -79,7 +81,12 @@ class Parser:
                 return [r[0], r[1] + 1]
             else:
                 return -1
-        elif i < len(query) - 2 and (query[i + 1] == "=" or query[i + 1] == "!="):
+        elif i < len(query) - 2 and (
+            query[i + 1] == "="
+            or query[i + 1] == "!="
+            or query[i + 1] == "~="
+            or query[i + 1] == "!~="
+        ):
             r = check_func(query, i, obj)
             if r == -1:
                 return -1
@@ -91,7 +98,7 @@ class Parser:
     def _get_keys(query: list[str]) -> list[str]:
         result: list[str] = []
         for i in range(1, len(query) - 1):
-            if query[i] == "=" or query[i] == "!=":
+            if query[i] == "=" or query[i] == "!=" or query[i] == "~=" or query[i] == "!~=":
                 if query[i - 1] not in result:
                     result.append(query[i - 1])
         return result
@@ -104,6 +111,13 @@ class Parser:
                 return obj[query[i]] == query[i + 2]
             elif query[i + 1] == "!=":
                 return obj[query[i]] != query[i + 2]
+            elif query[i + 1] == "~=":
+                # JS: (obj[key] ?? "").includes(val)。undefined を空文字扱い
+                val = obj.get(query[i])
+                return query[i + 2] in (val if val is not None else "")
+            elif query[i + 1] == "!~=":
+                val = obj.get(query[i])
+                return query[i + 2] not in (val if val is not None else "")
             else:
                 return -1
 
@@ -129,6 +143,15 @@ class Parser:
             elif query[i + 1] == "!=":
                 index = key_to_index[query[i]]
                 return obj[index] != query[i + 2]
+            elif query[i + 1] == "~=":
+                # JS: (obj[index] ?? "").includes(val)。undefined を空文字扱い
+                index = key_to_index[query[i]]
+                val = obj[index] if index < len(obj) else None
+                return query[i + 2] in (val if val is not None else "")
+            elif query[i + 1] == "!~=":
+                index = key_to_index[query[i]]
+                val = obj[index] if index < len(obj) else None
+                return query[i + 2] not in (val if val is not None else "")
             else:
                 return -1
 
