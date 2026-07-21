@@ -11,7 +11,8 @@
     ],
     "kana": "カレー",
     "id": "3",
-    "original": "カレー"
+    "original": "カレー",
+    "vcost": 0
    },
    {
     "surface": "ラーメン",
@@ -21,7 +22,19 @@
     ],
     "kana": "ラーメン",
     "id": "4",
-    "original": "ラーメン"
+    "original": "ラーメン",
+    "vcost": 1
+   },
+   {
+    "surface": "ラーメン",
+    "pronunciation": [
+     "ラー",
+     "メ"
+    ],
+    "kana": "ラーメン",
+    "id": "4",
+    "original": "ラーメン",
+    "vcost": 1
    },
    {
     "surface": "ぎょうざ",
@@ -31,7 +44,8 @@
     ],
     "kana": "ギョーザ",
     "id": "5",
-    "original": "ぎょうざ"
+    "original": "ぎょうざ",
+    "vcost": 0
    }
   ],
   "3": [
@@ -44,7 +58,8 @@
     ],
     "kana": "ラーメン",
     "id": "4",
-    "original": "ラーメン"
+    "original": "ラーメン",
+    "vcost": 0
    }
   ]
  }

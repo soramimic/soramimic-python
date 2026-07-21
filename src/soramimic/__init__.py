@@ -3,11 +3,11 @@
 soramimic/soramimic の frontend/src/lib (JS) と挙動互換の Python 移植。
 """
 
-from .factory import Soramimic, create_soramimic, load_default_data
+from .factory import Soramimic, create_soramimic, load_default_data, scale_similarity
 from .samples import SAMPLE_WORDLISTS, load_sample_wordlist
 from .tokenizer import Tokenizer
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 __all__ = [
     "SAMPLE_WORDLISTS",
@@ -16,5 +16,6 @@ __all__ = [
     "create_soramimic",
     "load_default_data",
     "load_sample_wordlist",
+    "scale_similarity",
     "__version__",
 ]

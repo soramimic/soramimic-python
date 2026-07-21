@@ -11,7 +11,41 @@
     ],
     "kana": "ニッポン",
     "id": "1",
-    "original": "ニッポン"
+    "original": "ニッポン",
+    "vcost": 2
+   },
+   {
+    "surface": "ニッポン",
+    "pronunciation": [
+     "ニ",
+     "ポ"
+    ],
+    "kana": "ニッポン",
+    "id": "1",
+    "original": "ニッポン",
+    "vcost": 2
+   },
+   {
+    "surface": "ニッポン",
+    "pronunciation": [
+     "ニー",
+     "ポー"
+    ],
+    "kana": "ニッポン",
+    "id": "1",
+    "original": "ニッポン",
+    "vcost": 2
+   },
+   {
+    "surface": "ニッポン",
+    "pronunciation": [
+     "ニー",
+     "ポ"
+    ],
+    "kana": "ニッポン",
+    "id": "1",
+    "original": "ニッポン",
+    "vcost": 2
    }
   ],
   "3": [
@@ -24,7 +58,20 @@
     ],
     "kana": "ニッポン",
     "id": "1",
-    "original": "ニッポン"
+    "original": "ニッポン",
+    "vcost": 1
+   },
+   {
+    "surface": "ニッポン",
+    "pronunciation": [
+     "ニ",
+     "ッ",
+     "ポ"
+    ],
+    "kana": "ニッポン",
+    "id": "1",
+    "original": "ニッポン",
+    "vcost": 1
    },
    {
     "surface": "ニッポン",
@@ -35,7 +82,20 @@
     ],
     "kana": "ニッポン",
     "id": "1",
-    "original": "ニッポン"
+    "original": "ニッポン",
+    "vcost": 1
+   },
+   {
+    "surface": "ニッポン",
+    "pronunciation": [
+     "ニー",
+     "ポ",
+     "ン"
+    ],
+    "kana": "ニッポン",
+    "id": "1",
+    "original": "ニッポン",
+    "vcost": 1
    }
   ],
   "4": [
@@ -49,7 +109,8 @@
     ],
     "kana": "ニッポン",
     "id": "1",
-    "original": "ニッポン"
+    "original": "ニッポン",
+    "vcost": 0
    }
   ],
   "6": [
@@ -65,7 +126,23 @@
     ],
     "kana": "アフガニスタン",
     "id": "0",
-    "original": "アフガニスタン"
+    "original": "アフガニスタン",
+    "vcost": 1
+   },
+   {
+    "surface": "アフガニスタン",
+    "pronunciation": [
+     "ア",
+     "フ",
+     "ガ",
+     "ニ",
+     "ス",
+     "タ"
+    ],
+    "kana": "アフガニスタン",
+    "id": "0",
+    "original": "アフガニスタン",
+    "vcost": 1
    }
   ],
   "7": [
@@ -82,7 +159,8 @@
     ],
     "kana": "アフガニスタン",
     "id": "0",
-    "original": "アフガニスタン"
+    "original": "アフガニスタン",
+    "vcost": 0
    }
   ]
  }

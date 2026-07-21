@@ -245,6 +245,7 @@ class WordList:
                         "kana": obj["pronunciation"],
                         "id": obj["id"],
                         "original": obj["original"],
+                        "vcost": getattr(p, "vcost", 0) or 0,  # 単語側の変種コスト(#105)
                     }
                 )
         return resultdb

@@ -70,15 +70,42 @@ _DATA_FILES = {
     "kana2phonon": "kana2phonon.json",
 }
 
+# 類似度行列の切り替え(similarity引数)。"monotie" は本体 #102 の
+# monophone(コア音素)タイブレーク方式(soramimic.com 現行版が使う行列)。
+_SIMILARITY_FILES = {
+    "simple": ("simVowelsSimple.json", "simConsonantsSimple.json"),
+    "monotie": ("simVowelsMonoTie.json", "simConsonantsMonoTie.json"),
+}
 
-def load_default_data() -> dict[str, Any]:
+SimMatrix = dict[str, dict[str, float]]
+
+
+def load_default_data(similarity: str = "simple") -> dict[str, Any]:
     """data/ 同梱の 6 つの JSON を読み込んで dict で返す。
 
     キーは create_soramimic の引数名に対応する。
+    similarity: 類似度行列の種類。"simple"(従来)か "monotie"(本体 #102 の
+    monophoneタイブレーク行列。soramimic.com 現行版と同じ)。
     """
+    try:
+        vowel_file, consonant_file = _SIMILARITY_FILES[similarity]
+    except KeyError:
+        raise ValueError(f"unknown similarity: {similarity!r} (expected 'simple' or 'monotie')") from None
+    files = {**_DATA_FILES, "vowel_similarity": vowel_file, "consonant_similarity": consonant_file}
     data: dict[str, Any] = {}
     data_pkg = resources.files("soramimic.data")
-    for key, filename in _DATA_FILES.items():
+    for key, filename in files.items():
         with (data_pkg / filename).open("r", encoding="utf-8") as f:
             data[key] = json.load(f)
     return data
+
+
+def scale_similarity(matrix: SimMatrix, factor: float) -> SimMatrix:
+    """類似度行列の全セルを factor 倍した新しい行列を返す(appCore.js の scaleMatrix)。
+
+    本体の「音の合わせ方」(vowelRatio = r)は、libのベース類似度が
+    (子音距離+母音距離)/2 固定なのを、入力行列を 母音×2r・子音×2(1-r) に
+    前処理することで (r・母音 + (1-r)・子音) にする。r=0.8 で「母音ロック・
+    子音タイブレーク」、r=0.2 でその鏡像(子音ロック)。
+    """
+    return {k1: {k2: v * factor for k2, v in row.items()} for k1, row in matrix.items()}

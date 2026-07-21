@@ -44,6 +44,29 @@ for line in results:
 kuromoji.js 互換のトークン dict( `surface_form` / `pronunciation` / `pos` …、未知語は `"*"` )を返せば何でも使えます。
 事前にトークナイズ済みの入力からは `generate_from_tokens()` で生成できます(固定区間 `locks` による部分再生成にも対応)。
 
+### soramimic.com 現行版と同じ設定で生成する
+
+本体フロントエンドは monophone タイブレーク行列(#102)と新パラメータ
+( `MID_PHRASE_BREAK_PENALTY` #98 / `VARIATION_COST` #105 )を使います。
+同じ経路は次のように組みます( `r` は「音の合わせ方」= vowelRatio、既定 0.8 ):
+
+```python
+from soramimic import create_soramimic, load_default_data, scale_similarity
+
+r = 0.8
+data = load_default_data(similarity="monotie")
+app = create_soramimic(
+    **{**data,
+       "vowel_similarity": scale_similarity(data["vowel_similarity"], 2 * r),
+       "consonant_similarity": scale_similarity(data["consonant_similarity"], 2 * (1 - r))},
+    tokenize_sentenses=tok.tokenize,
+    get_yomi=tok.get_yomi,
+)
+# 本体「バランス」プリセット相当のパラメータ
+param = {"SAME_PHRASE_BREAK_REWARD": 0, "MID_PHRASE_BREAK_PENALTY": 20,
+         "WORD_NUMBER_PENALTY": 20, "VARIATION_COST": 20 * r}
+```
+
 ## 本体JSとの互換性
 
 - モジュールは本体 `frontend/src/lib` の各JSファイルと1:1対応です( `kanaToSyllable.js` → `kana_to_syllable.py` など)。

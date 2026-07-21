@@ -1,0 +1,930 @@
+{
+ "wordlist_csv": "id,original,surface,pronunciation\n1,ヨーグルト,ヨーグルト,ヨーグルト\n2,マーチ,マーチ,マーチ\n3,カヌレ,カヌレ,カヌレ\n4,ケーキ,ケーキ,ケーキ\n5,ノルマ,ノルマ,ノルマ\n6,サケ,サケ,サケ\n7,ブリ,ブリ,ブリ\n8,ラブ,ラブ,ラブ\n9,ヲタク,ヲタク,ヲタク\n10,カケル,カケル,カケル\n11,ヨル,ヨル,ヨル\n12,マチ,マチ,マチ\n13,オー,オー,オー\n14,サビ,サビ,サビ\n15,クジラ,クジラ,クジラ\n16,テーブル,テーブル,テーブル\n17,ラーメンヤ,ラーメン屋,ラーメンヤ\n18,ボー,棒,ボー\n19,チョーエモイ,超エモい,チョーエモイ\n20,イチジク,無花果,イチジク\n21,ニアミス,ニアミス,ニアミス\n22,アット,アット,アット",
+ "cases": [
+  {
+   "name": "balance",
+   "vowel_ratio": 0.8,
+   "parameter": {
+    "SAME_PHRASE_BREAK_REWARD": 0,
+    "MID_PHRASE_BREAK_PENALTY": 20,
+    "WORD_NUMBER_PENALTY": 20,
+    "VARIATION_COST": 16,
+    "VOWEL_RATIO": 0.8
+   },
+   "tokens_list": [
+    [
+     {
+      "surface_form": "夜",
+      "basic_form": "夜",
+      "reading": "ヨル",
+      "pronunciation": "ヨル",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "の",
+      "basic_form": "の",
+      "reading": "ノ",
+      "pronunciation": "ノ",
+      "pos": "助詞",
+      "pos_detail_1": "連体化",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "街",
+      "basic_form": "街",
+      "reading": "マチ",
+      "pronunciation": "マチ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     },
+     {
+      "surface_form": "を",
+      "basic_form": "を",
+      "reading": "ヲ",
+      "pronunciation": "ヲ",
+      "pos": "助詞",
+      "pos_detail_1": "格助詞",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     },
+     {
+      "surface_form": "駆け抜ける",
+      "basic_form": "駆け抜ける",
+      "reading": "カケヌケル",
+      "pronunciation": "カケヌケル",
+      "pos": "動詞",
+      "pos_detail_1": "自立",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 2
+     }
+    ],
+    [
+     {
+      "surface_form": "love",
+      "basic_form": "love",
+      "reading": "*",
+      "pronunciation": "ラヴ",
+      "pos": "名詞",
+      "pos_detail_1": "固有名詞",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "を",
+      "basic_form": "を",
+      "reading": "ヲ",
+      "pronunciation": "ヲ",
+      "pos": "助詞",
+      "pos_detail_1": "格助詞",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "叫ぶ",
+      "basic_form": "叫ぶ",
+      "reading": "サケブ",
+      "pronunciation": "サケブ",
+      "pos": "動詞",
+      "pos_detail_1": "自立",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     }
+    ],
+    [
+     {
+      "surface_form": "ぴえんー",
+      "basic_form": "ぴえん",
+      "reading": "*",
+      "pronunciation": "ピエンー",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "!",
+      "basic_form": "!",
+      "reading": "!",
+      "pronunciation": "!",
+      "pos": "記号",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "超",
+      "basic_form": "超",
+      "reading": "チョウ",
+      "pronunciation": "チョー",
+      "pos": "接頭詞",
+      "pos_detail_1": "名詞接続",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "えもい",
+      "basic_form": "えもい",
+      "reading": "*",
+      "pronunciation": "エモイ",
+      "pos": "形容詞",
+      "pos_detail_1": "自立",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     }
+    ],
+    [
+     {
+      "surface_form": "1",
+      "basic_form": "1",
+      "reading": "*",
+      "pronunciation": "イチ",
+      "pos": "名詞",
+      "pos_detail_1": "数",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "じ",
+      "basic_form": "じ",
+      "reading": "ジ",
+      "pronunciation": "ジ",
+      "pos": "名詞",
+      "pos_detail_1": "接尾",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     },
+     {
+      "surface_form": "に",
+      "basic_form": "に",
+      "reading": "ニ",
+      "pronunciation": "ニ",
+      "pos": "助詞",
+      "pos_detail_1": "格助詞",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     },
+     {
+      "surface_form": "あっ",
+      "basic_form": "あ",
+      "reading": "ア",
+      "pronunciation": "アッ",
+      "pos": "感動詞",
+      "pos_detail_1": "*",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 2
+     }
+    ]
+   ],
+   "results": [
+    [
+     {
+      "surface": "ヨル",
+      "pronunciation": [
+       "ヨ",
+       "ル"
+      ],
+      "kana": "ヨル",
+      "id": "11",
+      "original": "ヨル",
+      "vcost": 0,
+      "sim": 0,
+      "originalkana": "ヨル",
+      "score": 20,
+      "period": [
+       0,
+       2
+      ],
+      "original_surface": "夜"
+     },
+     {
+      "surface": "棒",
+      "pronunciation": [
+       "ボー"
+      ],
+      "kana": "ボー",
+      "id": "18",
+      "original": "ボー",
+      "vcost": 0,
+      "sim": 30.21597038341733,
+      "originalkana": "ノ",
+      "score": 30.21597038341733,
+      "period": [
+       2,
+       3
+      ],
+      "original_surface": "の"
+     },
+     {
+      "surface": "マチ",
+      "pronunciation": [
+       "マ",
+       "チ"
+      ],
+      "kana": "マチ",
+      "id": "12",
+      "original": "マチ",
+      "vcost": 0,
+      "sim": 0,
+      "originalkana": "マチ",
+      "score": 20,
+      "period": [
+       3,
+       5
+      ],
+      "original_surface": "街"
+     },
+     {
+      "surface": "オー",
+      "pronunciation": [
+       "オー"
+      ],
+      "kana": "オー",
+      "id": "13",
+      "original": "オー",
+      "vcost": 0,
+      "sim": 16,
+      "originalkana": "ヲ",
+      "score": 16,
+      "period": [
+       5,
+       6
+      ],
+      "original_surface": "を"
+     },
+     {
+      "surface": "カケル",
+      "pronunciation": [
+       "カ",
+       "ケ",
+       "ル"
+      ],
+      "kana": "カケル",
+      "id": "10",
+      "original": "カケル",
+      "vcost": 0,
+      "sim": 14.182282974837852,
+      "originalkana": "カケヌ",
+      "score": 34.182282974837854,
+      "period": [
+       6,
+       9
+      ],
+      "original_surface": "駆け抜"
+     },
+     {
+      "surface": "ヨル",
+      "pronunciation": [
+       "ヨ",
+       "ル"
+      ],
+      "kana": "ヨル",
+      "id": "11",
+      "original": "ヨル",
+      "vcost": 0,
+      "sim": 74.08547268128046,
+      "originalkana": "ケル",
+      "score": 74.08547268128046,
+      "period": [
+       9,
+       11
+      ],
+      "original_surface": "ける"
+     }
+    ],
+    [
+     {
+      "surface": "ラブ",
+      "pronunciation": [
+       "ラ",
+       "ブ"
+      ],
+      "kana": "ラブ",
+      "id": "8",
+      "original": "ラブ",
+      "vcost": 0,
+      "sim": 0,
+      "originalkana": "ラヴ",
+      "score": 20,
+      "period": [
+       0,
+       2
+      ],
+      "original_surface": "love"
+     },
+     {
+      "surface": "オー",
+      "pronunciation": [
+       "オー"
+      ],
+      "kana": "オー",
+      "id": "13",
+      "original": "オー",
+      "vcost": 0,
+      "sim": 16,
+      "originalkana": "ヲ",
+      "score": 16,
+      "period": [
+       2,
+       3
+      ],
+      "original_surface": "を"
+     },
+     {
+      "surface": "カケル",
+      "pronunciation": [
+       "カ",
+       "ケ",
+       "ル"
+      ],
+      "kana": "カケル",
+      "id": "10",
+      "original": "カケル",
+      "vcost": 0,
+      "sim": 28.45673960774557,
+      "originalkana": "サケブ",
+      "score": 28.45673960774557,
+      "period": [
+       3,
+       6
+      ],
+      "original_surface": "叫ぶ"
+     }
+    ],
+    [
+     {
+      "surface": "サケ",
+      "pronunciation": [
+       "サ",
+       "ケ"
+      ],
+      "kana": "サケ",
+      "id": "6",
+      "original": "サケ",
+      "vcost": 0,
+      "sim": 89.88390005386341,
+      "originalkana": "ピエ",
+      "score": 109.88390005386341,
+      "period": [
+       0,
+       2
+      ],
+      "original_surface": "ぴえ"
+     },
+     {
+      "surface": "超エモい",
+      "pronunciation": [
+       "チョー",
+       "エ",
+       "モ",
+       "イ"
+      ],
+      "kana": "チョーエモイ",
+      "id": "19",
+      "original": "チョーエモイ",
+      "vcost": 0,
+      "sim": 32,
+      "originalkana": "ンーチョーエモイ",
+      "score": 32,
+      "period": [
+       2,
+       7
+      ],
+      "original_surface": "んー!超えもい"
+     }
+    ],
+    [
+     {
+      "surface": "無花果",
+      "pronunciation": [
+       "イ",
+       "チ",
+       "ジ",
+       "ク"
+      ],
+      "kana": "イチジク",
+      "id": "20",
+      "original": "イチジク",
+      "vcost": 0,
+      "sim": 73.30300275164295,
+      "originalkana": "イチジニ",
+      "score": 73.30300275164295,
+      "period": [
+       0,
+       4
+      ],
+      "original_surface": "1じに"
+     },
+     {
+      "surface": "オー",
+      "pronunciation": [
+       "オー"
+      ],
+      "kana": "オー",
+      "id": "13",
+      "original": "オー",
+      "vcost": 0,
+      "sim": 74.39219862090063,
+      "originalkana": "アッ",
+      "score": 74.39219862090063,
+      "period": [
+       4,
+       5
+      ],
+      "original_surface": "あっ"
+     }
+    ]
+   ]
+  },
+  {
+   "name": "phrase_focus_r03",
+   "vowel_ratio": 0.3,
+   "parameter": {
+    "SAME_PHRASE_BREAK_REWARD": 0,
+    "MID_PHRASE_BREAK_PENALTY": 160,
+    "WORD_NUMBER_PENALTY": 20,
+    "VARIATION_COST": 6,
+    "VOWEL_RATIO": 0.3
+   },
+   "tokens_list": [
+    [
+     {
+      "surface_form": "夜",
+      "basic_form": "夜",
+      "reading": "ヨル",
+      "pronunciation": "ヨル",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "の",
+      "basic_form": "の",
+      "reading": "ノ",
+      "pronunciation": "ノ",
+      "pos": "助詞",
+      "pos_detail_1": "連体化",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "街",
+      "basic_form": "街",
+      "reading": "マチ",
+      "pronunciation": "マチ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     },
+     {
+      "surface_form": "を",
+      "basic_form": "を",
+      "reading": "ヲ",
+      "pronunciation": "ヲ",
+      "pos": "助詞",
+      "pos_detail_1": "格助詞",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     },
+     {
+      "surface_form": "駆け抜ける",
+      "basic_form": "駆け抜ける",
+      "reading": "カケヌケル",
+      "pronunciation": "カケヌケル",
+      "pos": "動詞",
+      "pos_detail_1": "自立",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 2
+     }
+    ],
+    [
+     {
+      "surface_form": "love",
+      "basic_form": "love",
+      "reading": "*",
+      "pronunciation": "ラヴ",
+      "pos": "名詞",
+      "pos_detail_1": "固有名詞",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "を",
+      "basic_form": "を",
+      "reading": "ヲ",
+      "pronunciation": "ヲ",
+      "pos": "助詞",
+      "pos_detail_1": "格助詞",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "叫ぶ",
+      "basic_form": "叫ぶ",
+      "reading": "サケブ",
+      "pronunciation": "サケブ",
+      "pos": "動詞",
+      "pos_detail_1": "自立",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     }
+    ],
+    [
+     {
+      "surface_form": "ぴえんー",
+      "basic_form": "ぴえん",
+      "reading": "*",
+      "pronunciation": "ピエンー",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "!",
+      "basic_form": "!",
+      "reading": "!",
+      "pronunciation": "!",
+      "pos": "記号",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "超",
+      "basic_form": "超",
+      "reading": "チョウ",
+      "pronunciation": "チョー",
+      "pos": "接頭詞",
+      "pos_detail_1": "名詞接続",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "えもい",
+      "basic_form": "えもい",
+      "reading": "*",
+      "pronunciation": "エモイ",
+      "pos": "形容詞",
+      "pos_detail_1": "自立",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     }
+    ],
+    [
+     {
+      "surface_form": "1",
+      "basic_form": "1",
+      "reading": "*",
+      "pronunciation": "イチ",
+      "pos": "名詞",
+      "pos_detail_1": "数",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     },
+     {
+      "surface_form": "じ",
+      "basic_form": "じ",
+      "reading": "ジ",
+      "pronunciation": "ジ",
+      "pos": "名詞",
+      "pos_detail_1": "接尾",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     },
+     {
+      "surface_form": "に",
+      "basic_form": "に",
+      "reading": "ニ",
+      "pronunciation": "ニ",
+      "pos": "助詞",
+      "pos_detail_1": "格助詞",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 1
+     },
+     {
+      "surface_form": "あっ",
+      "basic_form": "あ",
+      "reading": "ア",
+      "pronunciation": "アッ",
+      "pos": "感動詞",
+      "pos_detail_1": "*",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 2
+     }
+    ]
+   ],
+   "results": [
+    [
+     {
+      "surface": "ノルマ",
+      "pronunciation": [
+       "ノ",
+       "ル",
+       "マ"
+      ],
+      "kana": "ノルマ",
+      "id": "5",
+      "original": "ノルマ",
+      "vcost": 0,
+      "sim": 121.44987713047084,
+      "originalkana": "ヨルノ",
+      "score": 121.44987713047084,
+      "period": [
+       0,
+       3
+      ],
+      "original_surface": "夜の"
+     },
+     {
+      "surface": "アット",
+      "pronunciation": [
+       "ア",
+       "ッ",
+       "ト"
+      ],
+      "kana": "アット",
+      "id": "22",
+      "original": "アット",
+      "vcost": 0,
+      "sim": 173.96415167698822,
+      "originalkana": "マチヲ",
+      "score": 173.96415167698822,
+      "period": [
+       3,
+       6
+      ],
+      "original_surface": "街を"
+     },
+     {
+      "surface": "ケーキ",
+      "pronunciation": [
+       "ケー",
+       "キ"
+      ],
+      "kana": "ケーキ",
+      "id": "4",
+      "original": "ケーキ",
+      "vcost": 0,
+      "sim": 44.75166031860451,
+      "originalkana": "カケ",
+      "score": 204.7516603186045,
+      "period": [
+       6,
+       8
+      ],
+      "original_surface": "駆け"
+     },
+     {
+      "surface": "カケル",
+      "pronunciation": [
+       "カ",
+       "ケ",
+       "ル"
+      ],
+      "kana": "カケル",
+      "id": "10",
+      "original": "カケル",
+      "vcost": 0,
+      "sim": 73.08360576236232,
+      "originalkana": "ヌケル",
+      "score": 73.08360576236232,
+      "period": [
+       8,
+       11
+      ],
+      "original_surface": "抜ける"
+     }
+    ],
+    [
+     {
+      "surface": "テーブル",
+      "pronunciation": [
+       "テー",
+       "ブ",
+       "ル"
+      ],
+      "kana": "テーブル",
+      "id": "16",
+      "original": "テーブル",
+      "vcost": 0,
+      "sim": 145.88581646563858,
+      "originalkana": "ラヴヲ",
+      "score": 145.88581646563858,
+      "period": [
+       0,
+       3
+      ],
+      "original_surface": "loveを"
+     },
+     {
+      "surface": "カケル",
+      "pronunciation": [
+       "カ",
+       "ケ",
+       "ル"
+      ],
+      "kana": "カケル",
+      "id": "10",
+      "original": "カケル",
+      "vcost": 0,
+      "sim": 99.5985886271095,
+      "originalkana": "サケブ",
+      "score": 99.5985886271095,
+      "period": [
+       3,
+       6
+      ],
+      "original_surface": "叫ぶ"
+     }
+    ],
+    [
+     {
+      "surface": "サケ",
+      "pronunciation": [
+       "サ",
+       "ケ"
+      ],
+      "kana": "サケ",
+      "id": "6",
+      "original": "サケ",
+      "vcost": 0,
+      "sim": 122.82419628173976,
+      "originalkana": "ピエ",
+      "score": 282.8241962817398,
+      "period": [
+       0,
+       2
+      ],
+      "original_surface": "ぴえ"
+     },
+     {
+      "surface": "超エモい",
+      "pronunciation": [
+       "チョー",
+       "エ",
+       "モ",
+       "イ"
+      ],
+      "kana": "チョーエモイ",
+      "id": "19",
+      "original": "チョーエモイ",
+      "vcost": 0,
+      "sim": 12,
+      "originalkana": "ンーチョーエモイ",
+      "score": 12,
+      "period": [
+       2,
+       7
+      ],
+      "original_surface": "んー!超えもい"
+     }
+    ],
+    [
+     {
+      "surface": "無花果",
+      "pronunciation": [
+       "イ",
+       "チ",
+       "ジ",
+       "ク"
+      ],
+      "kana": "イチジク",
+      "id": "20",
+      "original": "イチジク",
+      "vcost": 0,
+      "sim": 72.83617934347345,
+      "originalkana": "イチジニ",
+      "score": 72.83617934347345,
+      "period": [
+       0,
+       4
+      ],
+      "original_surface": "1じに"
+     },
+     {
+      "surface": "オー",
+      "pronunciation": [
+       "オー"
+      ],
+      "kana": "オー",
+      "id": "13",
+      "original": "オー",
+      "vcost": 0,
+      "sim": 27.897074482837734,
+      "originalkana": "アッ",
+      "score": 27.897074482837734,
+      "period": [
+       4,
+       5
+      ],
+      "original_surface": "あっ"
+     }
+    ]
+   ]
+  }
+ ]
+}
