@@ -90,7 +90,9 @@ def load_default_data(similarity: str = "simple") -> dict[str, Any]:
     try:
         vowel_file, consonant_file = _SIMILARITY_FILES[similarity]
     except KeyError:
-        raise ValueError(f"unknown similarity: {similarity!r} (expected 'simple' or 'monotie')") from None
+        raise ValueError(
+            f"unknown similarity: {similarity!r} (expected 'simple' or 'monotie')"
+        ) from None
     files = {**_DATA_FILES, "vowel_similarity": vowel_file, "consonant_similarity": consonant_file}
     data: dict[str, Any] = {}
     data_pkg = resources.files("soramimic.data")

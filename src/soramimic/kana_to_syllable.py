@@ -434,7 +434,9 @@ class KanaToSyllable:
                 variation.append({"u": [head + "ー"], "c": 0})
             elif syllable.endswith("ッ"):
                 head = syllable[:-1]
-                variation.append({"u": [head, "ッ"], "c": 0})  # ex. アッ→["ア","ッ"],["ア"],["アー"]
+                variation.append(
+                    {"u": [head, "ッ"], "c": 0}
+                )  # ex. アッ→["ア","ッ"],["ア"],["アー"]
                 variation.append({"u": [head], "c": 1})  # ッ削除
                 variation.append({"u": [head + "ー"], "c": 1})  # ッ→ー置換(単一操作でッ↔ーを閉じる)
             elif syllable.endswith("ン"):  # ex. アン→["ア","ン"],["アー"],["ア"]
@@ -446,7 +448,9 @@ class KanaToSyllable:
                 head = syllable[:-1]
                 vowel = syllable[len(syllable) - 1]
                 variation.append({"u": [head, vowel], "c": 0})
-                variation.append({"u": [head + "ー"], "c": 0})  # 表記ゆれ(母音連続→ー)扱いで無コスト
+                variation.append(
+                    {"u": [head + "ー"], "c": 0}
+                )  # 表記ゆれ(母音連続→ー)扱いで無コスト
             else:  # 1モーラ
                 variation.append({"u": [syllable], "c": 0})
             result.append(variation)

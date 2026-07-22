@@ -95,9 +95,10 @@ class SoramimiMaker:
                     # ldの生スコアに変種コスト(ターゲット側 c.vcost + 単語側 w.vcost)を
                     # 加算した素の合計にする(#105)。旧正規化(÷変種長×音節数)は
                     # 対角0の新行列(#102/#104)では希釈の副作用だけが残るため廃止。
-                    d = self._ld(c, w["pronunciation"], kana_dist) + (
-                        (getattr(c, "vcost", 0) or 0) + (w.get("vcost") or 0)
-                    ) * variation_cost
+                    d = (
+                        self._ld(c, w["pronunciation"], kana_dist)
+                        + ((getattr(c, "vcost", 0) or 0) + (w.get("vcost") or 0)) * variation_cost
+                    )
                     sim = min(d, sim)
                 wid = w["id"]
                 if wid in words and sim > words[wid]["sim"]:
@@ -235,7 +236,10 @@ class SoramimiMaker:
     ) -> list[Word]:
         param = self._assign_default_parameter(parameter)
         kana_dist = self.kana_similarity.get_kana_similarity(param)
-        words = self.get_similar_word(wordlist, target, kana_dist, length, param["VARIATION_COST"]) or []
+        words = (
+            self.get_similar_word(wordlist, target, kana_dist, length, param["VARIATION_COST"])
+            or []
+        )
         return [dict(w) for w in words[:length]]
 
     def generate(
@@ -267,7 +271,9 @@ class SoramimiMaker:
             joined_target = "".join(target)
             if joined_target in gsmemo:
                 return gsmemo[joined_target]
-            result = self.get_similar_word(wordlist, target, kana_dist, 100, param["VARIATION_COST"])
+            result = self.get_similar_word(
+                wordlist, target, kana_dist, 100, param["VARIATION_COST"]
+            )
             gsmemo[joined_target] = result
             return result
 
