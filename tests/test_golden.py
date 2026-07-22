@@ -138,6 +138,34 @@ def test_generate_from_tokens(app):
         assert normalize(results) == case["results"], case["name"]
 
 
+def test_generate_from_tokens_monotie():
+    # MonoTie行列 + vowelRatioスケーリング(appCore.js の appFor 相当、#102)。
+    # soramimic.com 現行版の生成経路をアプリ組み立てごと検証する
+    from soramimic import scale_similarity
+
+    fixture = load("generate_from_tokens_monotie.json")
+    for case in fixture["cases"]:
+        r = case["vowel_ratio"]
+        data = load_default_data(similarity="monotie")
+        app_r = create_soramimic(
+            kanji_dict=data["kanji_dict"],
+            english_dict=data["english_dict"],
+            roman_tree=data["roman_tree"],
+            vowel_similarity=scale_similarity(data["vowel_similarity"], 2 * r),
+            consonant_similarity=scale_similarity(data["consonant_similarity"], 2 * (1 - r)),
+            kana2phonon=data["kana2phonon"],
+            tokenize_sentenses=fake_tokenize,
+            get_yomi=fake_get_yomi,
+        )
+        db = app_r.word_list.parse_tidy(fixture["wordlist_csv"], "")
+        results = app_r.soramimi_maker.generate_from_tokens(
+            copy.deepcopy(case["tokens_list"]),
+            db,
+            case["parameter"],
+        )
+        assert normalize(results) == case["results"], case["name"]
+
+
 def test_get_candidates(app):
     fixture = load("get_candidates.json")
     db = app.word_list.parse_tidy(fixture["wordlist_csv"], "")

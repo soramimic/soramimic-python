@@ -10,7 +10,19 @@
     ],
     "kana": "リンゴ",
     "id": "1",
-    "original": "りんご"
+    "original": "りんご",
+    "vcost": 1
+   },
+   {
+    "surface": "りんご",
+    "pronunciation": [
+     "リ",
+     "ゴ"
+    ],
+    "kana": "リンゴ",
+    "id": "1",
+    "original": "りんご",
+    "vcost": 1
    }
   ],
   "3": [
@@ -23,7 +35,8 @@
     ],
     "kana": "リンゴ",
     "id": "1",
-    "original": "りんご"
+    "original": "りんご",
+    "vcost": 0
    },
    {
     "surface": "シンジュク",
@@ -34,7 +47,20 @@
     ],
     "kana": "シンジュク",
     "id": "2",
-    "original": "シンジュク"
+    "original": "シンジュク",
+    "vcost": 1
+   },
+   {
+    "surface": "シンジュク",
+    "pronunciation": [
+     "シ",
+     "ジュ",
+     "ク"
+    ],
+    "kana": "シンジュク",
+    "id": "2",
+    "original": "シンジュク",
+    "vcost": 1
    }
   ],
   "4": [
@@ -48,7 +74,8 @@
     ],
     "kana": "トーキョータワー",
     "id": "0",
-    "original": "東京タワー"
+    "original": "東京タワー",
+    "vcost": 0
    },
    {
     "surface": "シンジュク",
@@ -60,7 +87,8 @@
     ],
     "kana": "シンジュク",
     "id": "2",
-    "original": "シンジュク"
+    "original": "シンジュク",
+    "vcost": 0
    }
   ],
   "5": [
@@ -75,7 +103,8 @@
     ],
     "kana": "スカイツリー",
     "id": "3",
-    "original": "スカイツリー"
+    "original": "スカイツリー",
+    "vcost": 0
    }
   ],
   "7": [
@@ -92,7 +121,8 @@
     ],
     "kana": "スカイツリータワー",
     "id": "3",
-    "original": "スカイツリー"
+    "original": "スカイツリー",
+    "vcost": 0
    }
   ]
  }

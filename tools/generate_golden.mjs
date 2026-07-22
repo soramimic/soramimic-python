@@ -259,6 +259,13 @@ for (const [name, parameter] of [
   ["default", {}],
   ["no_duplicate", { DUPLICATE: false }],
   ["phrase_reward", { SAME_PHRASE_BREAK_REWARD: 3, WORD_NUMBER_PENALTY: 2 }],
+  // 新パラメータ(#98 MID_PHRASE_BREAK_PENALTY / #105 VARIATION_COST)。
+  // 値は本体フロントエンドの「バランス」プリセット相当(r=0.8時の getParam)
+  ["new_params", {
+    SAME_PHRASE_BREAK_REWARD: 0, MID_PHRASE_BREAK_PENALTY: 20,
+    WORD_NUMBER_PENALTY: 20, VARIATION_COST: 16,
+  }],
+  ["mid_phrase_break_max", { SAME_PHRASE_BREAK_REWARD: 0, MID_PHRASE_BREAK_PENALTY: 160 }],
 ]) {
   const results = await runGenerate(formatted, genDb, parameter);
   genCases.push({ name, parameter, tokens_list: formatted, results });
@@ -266,6 +273,52 @@ for (const [name, parameter] of [
 writeFileSync(
   join(OUTDIR, "generate_from_tokens.json"),
   JSON.stringify({ wordlist_csv: genWordlistCsv, cases: genCases }, null, 1)
+);
+
+// ---------------------------------------------------------------
+// 7. MonoTie行列 + vowelRatioスケーリング(appCore.js の appFor 相当)。
+// soramimic.com 現行版の生成経路(#102)をアプリ組み立てごと検証する
+const vowelSimilarityMonoTie = loadJson("simVowelsMonoTie.json");
+const consonantSimilarityMonoTie = loadJson("simConsonantsMonoTie.json");
+function scaleMatrix(m, f) {
+  const out = {};
+  for (const k1 in m) {
+    out[k1] = {};
+    for (const k2 in m[k1]) out[k1][k2] = m[k1][k2] * f;
+  }
+  return out;
+}
+const monoTieCases = [];
+for (const [name, r, parameter] of [
+  // 本体プリセット「バランス」(r=0.8, 文節1→MID20, 単語長2→WNP20)
+  ["balance", 0.8, {
+    SAME_PHRASE_BREAK_REWARD: 0, MID_PHRASE_BREAK_PENALTY: 20,
+    WORD_NUMBER_PENALTY: 20, VARIATION_COST: 16, VOWEL_RATIO: 0.8,
+  }],
+  // 本体プリセット「文節重視」(文節8→MID160)+ 子音寄り r=0.3
+  ["phrase_focus_r03", 0.3, {
+    SAME_PHRASE_BREAK_REWARD: 0, MID_PHRASE_BREAK_PENALTY: 160,
+    WORD_NUMBER_PENALTY: 20, VARIATION_COST: 6, VOWEL_RATIO: 0.3,
+  }],
+]) {
+  const appR = createSoramimic({
+    kanjiDict, englishDict, romanTree, kana2phonon,
+    vowelSimilarity: scaleMatrix(vowelSimilarityMonoTie, 2 * r),
+    consonantSimilarity: scaleMatrix(consonantSimilarityMonoTie, 2 * (1 - r)),
+    tokenizeSentenses: fakeTokenize,
+    getYomi: fakeGetYomi,
+  });
+  const dbR = appR.wordList.parseTidy(genWordlistCsv, "");
+  const results = await new Promise((resolve) => {
+    appR.soramimiMaker.generateFromTokens(
+      JSON.parse(JSON.stringify(formatted)), dbR, parameter, null, resolve
+    );
+  });
+  monoTieCases.push({ name, vowel_ratio: r, parameter, tokens_list: formatted, results });
+}
+writeFileSync(
+  join(OUTDIR, "generate_from_tokens_monotie.json"),
+  JSON.stringify({ wordlist_csv: genWordlistCsv, cases: monoTieCases }, null, 1)
 );
 
 // getCandidates: 選択範囲の発音ユニット配列に対する候補

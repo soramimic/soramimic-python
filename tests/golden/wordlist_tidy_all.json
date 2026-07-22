@@ -11,7 +11,8 @@
     ],
     "kana": "カレー",
     "id": "3",
-    "original": "カレー"
+    "original": "カレー",
+    "vcost": 0
    },
    {
     "surface": "ラーメン",
@@ -21,7 +22,19 @@
     ],
     "kana": "ラーメン",
     "id": "4",
-    "original": "ラーメン"
+    "original": "ラーメン",
+    "vcost": 1
+   },
+   {
+    "surface": "ラーメン",
+    "pronunciation": [
+     "ラー",
+     "メ"
+    ],
+    "kana": "ラーメン",
+    "id": "4",
+    "original": "ラーメン",
+    "vcost": 1
    },
    {
     "surface": "ぎょうざ",
@@ -31,7 +44,8 @@
     ],
     "kana": "ギョーザ",
     "id": "5",
-    "original": "ぎょうざ"
+    "original": "ぎょうざ",
+    "vcost": 0
    }
   ],
   "3": [
@@ -44,7 +58,8 @@
     ],
     "kana": "ラーメン",
     "id": "4",
-    "original": "ラーメン"
+    "original": "ラーメン",
+    "vcost": 0
    },
    {
     "surface": "パソコン",
@@ -55,7 +70,20 @@
     ],
     "kana": "パソコン",
     "id": "6",
-    "original": "パソコン"
+    "original": "パソコン",
+    "vcost": 1
+   },
+   {
+    "surface": "パソコン",
+    "pronunciation": [
+     "パ",
+     "ソ",
+     "コ"
+    ],
+    "kana": "パソコン",
+    "id": "6",
+    "original": "パソコン",
+    "vcost": 1
    }
   ],
   "4": [
@@ -69,7 +97,8 @@
     ],
     "kana": "パソコン",
     "id": "6",
-    "original": "パソコン"
+    "original": "パソコン",
+    "vcost": 0
    }
   ],
   "5": [
@@ -84,7 +113,22 @@
     ],
     "kana": "ヤマノテセン",
     "id": "1",
-    "original": "山手線"
+    "original": "山手線",
+    "vcost": 1
+   },
+   {
+    "surface": "山手線",
+    "pronunciation": [
+     "ヤ",
+     "マ",
+     "ノ",
+     "テ",
+     "セ"
+    ],
+    "kana": "ヤマノテセン",
+    "id": "1",
+    "original": "山手線",
+    "vcost": 1
    },
    {
     "surface": "秋葉原",
@@ -97,7 +141,8 @@
     ],
     "kana": "アキハバラ",
     "id": "2",
-    "original": "秋葉原"
+    "original": "秋葉原",
+    "vcost": 0
    }
   ],
   "6": [
@@ -113,7 +158,8 @@
     ],
     "kana": "ヤマノテセン",
     "id": "1",
-    "original": "山手線"
+    "original": "山手線",
+    "vcost": 0
    }
   ]
  }

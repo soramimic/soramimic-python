@@ -18,6 +18,16 @@ def _match_all(pattern: re.Pattern[str], text: str) -> list[str] | None:
     return matches if matches else None
 
 
+class Variation(list):
+    """ユニット列(list[str])に変種コスト vcost を持たせたリスト(#105)。
+
+    JSでは配列に ``.vcost`` プロパティを直接生やしている。list のサブクラスなので
+    既存の list[str] を期待するコードとそのまま互換。
+    """
+
+    vcost: int = 0
+
+
 def char_to_consonant(char: str) -> str:
     """文字を子音記号に変換(kanaToSyllable.js の charToConsonant)。
 
@@ -375,70 +385,82 @@ class KanaToSyllable:
         return _match_all(self._re_all, text)
 
     def get_variation(self, syllables: list[str] | None) -> list[list[str]]:
-        """カナ発音のバリエーションを取得する(getVariation)。"""
-        result: list[list[list[str]]] = []
+        """カナ発音のバリエーションを取得する(getVariation)。
+
+        各変種に変換操作回数(コスト)を付与する(#105)。ン→ー化・ッ削除・
+        裸ン/ッ削除・ー削除=各1操作、複合音節は合計、無変換や表記ゆれ
+        (母音連続→ー)=0。返り値は従来同様のユニット配列(文字列配列)だが、
+        各配列(Variation)に .vcost 属性で操作回数の合計を持たせる。
+        variation の各要素は {"u": ユニット配列, "c": 操作数}。
+        """
+        result: list[list[dict[str, Any]]] = []
         if not syllables:
             return []
         for syllable in syllables:
             if syllable is None:
                 continue
-            variation: list[list[str]] = []
+            variation: list[dict[str, Any]] = []
             if re.match(r"^[アイウエオ]$", syllable):  # アイウエオは先に処理
-                variation.append([syllable])
+                variation.append({"u": [syllable], "c": 0})
             elif re.match(r"^[ンッ]$", syllable):
-                variation.append([syllable])
-                variation.append([""])
+                variation.append({"u": [syllable], "c": 0})
+                variation.append({"u": [""], "c": 1})  # 裸ン・ッの削除
             elif syllable == "ンー":  # ンー→["ン","ン"],["ン"],[""]
-                variation.append(["ン", "ン"])
-                variation.append(["ン"])
-                variation.append([""])
+                variation.append({"u": ["ン", "ン"], "c": 1})  # ー→ン変換
+                variation.append({"u": ["ン"], "c": 1})  # ー削除
+                variation.append({"u": [""], "c": 2})  # ン削除+ー削除
             elif syllable == "ンッ":  # ンッ→["ン","ッ"],["ン"],["ッ"],[""]
-                # JS原典は変数名タイポ(variaion)で例外になるが、Inifinityタイポと同様に
-                # 意図した値を返す(#報告参照)
-                variation.append(["ン", "ッ"])
-                variation.append(["ン"])
-                variation.append(["ッ"])
-                variation.append([""])
+                variation.append({"u": ["ン", "ッ"], "c": 0})
+                variation.append({"u": ["ン"], "c": 1})  # ッ削除
+                variation.append({"u": ["ッ"], "c": 1})  # ン削除
+                variation.append({"u": [""], "c": 2})
             elif syllable.endswith("ーン"):  # ex: アーン→["アー","ン"],["アー"]
                 head = syllable[:-2]
-                variation.append([head + "ー", "ン"])
-                variation.append([head + "ー"])
+                variation.append({"u": [head + "ー", "ン"], "c": 0})
+                variation.append({"u": [head + "ー"], "c": 1})  # ン削除
             elif syllable.endswith("ンッ"):  # ex: アンッ→[...]
                 head = syllable[:-2]
-                variation.append([head, "ン", "ッ"])
-                variation.append([head, "ン"])
-                variation.append([head + "ー", "ッ"])
-                variation.append([head + "ー"])
+                variation.append({"u": [head, "ン", "ッ"], "c": 0})
+                variation.append({"u": [head, "ン"], "c": 1})  # ッ削除
+                variation.append({"u": [head + "ー", "ッ"], "c": 1})  # ン→ー化
+                variation.append({"u": [head + "ー"], "c": 2})  # ン→ー化+ッ削除
+                variation.append({"u": [head, "ッ"], "c": 1})  # ン削除
             elif syllable.endswith("ーッ"):  # ex. アーッ→["アー","ッ"],["アー"]
                 head = syllable[:-2]
-                variation.append([head + "ー", "ッ"])
-                variation.append([head + "ー"])
+                variation.append({"u": [head + "ー", "ッ"], "c": 0})
+                variation.append({"u": [head + "ー"], "c": 1})  # ッ削除
             elif syllable.endswith("ー"):  # ex. アー→["アー"]
                 head = syllable[:-1]
-                variation.append([head + "ー"])
+                variation.append({"u": [head + "ー"], "c": 0})
             elif syllable.endswith("ッ"):
                 head = syllable[:-1]
-                variation.append([head, "ッ"])  # ex. アッ→["ア","ッ"],["ア"]
-                variation.append([head])
-            elif syllable.endswith("ン"):  # ex. アン→["ア","ン"],["アー"]
+                variation.append(
+                    {"u": [head, "ッ"], "c": 0}
+                )  # ex. アッ→["ア","ッ"],["ア"],["アー"]
+                variation.append({"u": [head], "c": 1})  # ッ削除
+                variation.append({"u": [head + "ー"], "c": 1})  # ッ→ー置換(単一操作でッ↔ーを閉じる)
+            elif syllable.endswith("ン"):  # ex. アン→["ア","ン"],["アー"],["ア"]
                 head = syllable[:-1]
-                variation.append([head, "ン"])
-                variation.append([head + "ー"])
+                variation.append({"u": [head, "ン"], "c": 0})
+                variation.append({"u": [head + "ー"], "c": 1})  # ン→ー化
+                variation.append({"u": [head], "c": 1})  # ン削除(単一操作でン削除を閉じる)
             elif re.search(r"[アイウエオ]$", syllable):  # カア→["カ","ア"],["カー"]
                 head = syllable[:-1]
                 vowel = syllable[len(syllable) - 1]
-                variation.append([head, vowel])
-                variation.append([head + "ー"])
+                variation.append({"u": [head, vowel], "c": 0})
+                variation.append(
+                    {"u": [head + "ー"], "c": 0}
+                )  # 表記ゆれ(母音連続→ー)扱いで無コスト
             else:  # 1モーラ
-                variation.append([syllable])
+                variation.append({"u": [syllable], "c": 0})
             result.append(variation)
 
         out: list[list[str]] = []
         for combo in product(*result):
-            # JSの v.filter(v2=>v2!="") はArray→string強制変換。[""] や [] のみ除外される
-            kept = [e for e in combo if ",".join(e) != ""]
-            flat = [x for e in kept for x in e]
+            # JSの v.flatMap(o=>o.u).filter(v2=>v2!=="")。空ユニットは平坦化後に除外
+            flat = Variation(x for e in combo for x in e["u"] if x != "")
             if len(flat) != 0:
+                flat.vcost = sum(e["c"] for e in combo)  # 操作回数の合計
                 out.append(flat)
         return out
 

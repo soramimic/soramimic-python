@@ -35,7 +35,9 @@ class SoramimiMaker:
             "SPLITTER": "/",
             "DUPLICATE": True,
             "SAME_PHRASE_BREAK_REWARD": 1,
+            "MID_PHRASE_BREAK_PENALTY": 0,  # 文節の途中で単語が切れることへのペナルティ(0で従来と同一) #98
             "WORD_NUMBER_PENALTY": 1,
+            "VARIATION_COST": 0,  # ン/ッ/ーの1変換操作あたりのコスト(0で無効。#105)
             "LENGTH": 1,
         }
         if parameters:
@@ -66,10 +68,11 @@ class SoramimiMaker:
         target: list[str],
         kana_dist: SimTable,
         length: int = 1,
+        variation_cost: float = 0,
     ) -> list[Word]:
         """kanaDist下で target に距離の近い単語を求める(getSimilarWord)。
 
-        wordlist の各エントリ dict に sim を直接書き込む(共有ミューテーション)。
+        variation_cost: ン/ッ/ーの1変換操作あたりに加算するコスト(#105)。
         """
         tmp = self.text_analyzer.syllable_to_variation(target)
         candidates: dict[int, list[list[str]]] = {}
@@ -85,14 +88,22 @@ class SoramimiMaker:
         for i in js_object_key_order([str(k) for k in candidates.keys()]):
             key = int(i)
             for w in wordlist[key]:
-                w["sim"] = INF
+                # 共有オブジェクトを直接書き換えるとDPの再帰中に別セグメントの
+                # クエリがsimを上書きし、スコア計算が汚染される(#99)。コピーに載せる
+                sim = INF
                 for c in candidates[key]:
-                    d = self._ld(c, w["pronunciation"], kana_dist) / key * len(target)
-                    w["sim"] = min(d, w["sim"])
+                    # ldの生スコアに変種コスト(ターゲット側 c.vcost + 単語側 w.vcost)を
+                    # 加算した素の合計にする(#105)。旧正規化(÷変種長×音節数)は
+                    # 対角0の新行列(#102/#104)では希釈の副作用だけが残るため廃止。
+                    d = (
+                        self._ld(c, w["pronunciation"], kana_dist)
+                        + ((getattr(c, "vcost", 0) or 0) + (w.get("vcost") or 0)) * variation_cost
+                    )
+                    sim = min(d, sim)
                 wid = w["id"]
-                if wid in words and w["sim"] > words[wid]["sim"]:
+                if wid in words and sim > words[wid]["sim"]:
                     continue
-                words[wid] = w
+                words[wid] = {**w, "sim": sim}
 
         words2 = [words[wid] for wid in js_object_key_order(list(words.keys()))]
         words2.sort(key=lambda a: a["sim"])
@@ -108,6 +119,8 @@ class SoramimiMaker:
     ) -> list[Any]:
         is_duplicate = param["DUPLICATE"]
         same_phrase_break = param["SAME_PHRASE_BREAK_REWARD"]
+        # 未指定(旧呼び出し元)は0=従来と同一 #98
+        mid_phrase_break = param.get("MID_PHRASE_BREAK_PENALTY") or 0
         words_num = param["WORD_NUMBER_PENALTY"]
 
         # 固定単語は使用済み扱い(可変リスト)
@@ -169,6 +182,9 @@ class SoramimiMaker:
                 new_word["score"] = new_word["sim"]
                 if t in phrase_breaks:
                     new_word["score"] -= same_phrase_break * 1
+                elif t != len(target):
+                    # 文節の途中で単語が切れる(終端が文節境界にも行末にも一致しない)ペナルティ #98
+                    new_word["score"] += mid_phrase_break
                 new_word["period"] = [i, t]
 
                 new_score = prev_score + new_word["score"] + words_num
@@ -220,7 +236,10 @@ class SoramimiMaker:
     ) -> list[Word]:
         param = self._assign_default_parameter(parameter)
         kana_dist = self.kana_similarity.get_kana_similarity(param)
-        words = self.get_similar_word(wordlist, target, kana_dist, length) or []
+        words = (
+            self.get_similar_word(wordlist, target, kana_dist, length, param["VARIATION_COST"])
+            or []
+        )
         return [dict(w) for w in words[:length]]
 
     def generate(
@@ -252,7 +271,9 @@ class SoramimiMaker:
             joined_target = "".join(target)
             if joined_target in gsmemo:
                 return gsmemo[joined_target]
-            result = self.get_similar_word(wordlist, target, kana_dist, 100)
+            result = self.get_similar_word(
+                wordlist, target, kana_dist, 100, param["VARIATION_COST"]
+            )
             gsmemo[joined_target] = result
             return result
 
