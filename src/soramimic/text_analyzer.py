@@ -14,6 +14,7 @@ from .character import Character, TokenFormatter
 from .english import English
 from .kana_to_syllable import (
     KanaToSyllable,
+    absorb_small_kana,
     hira_to_kata,
     remove_unnatural_kana_pattern,
 )
@@ -79,7 +80,33 @@ class TextAnalyzer:
             for token in tokens:
                 if token["pronunciation"] == "*":
                     token["pos"] = "記号"
+
+            self._absorb_small_kana_in_tokens(tokens)
         return tokens_list
+
+    @staticmethod
+    def _absorb_small_kana_in_tokens(tokens: list[Token]) -> None:
+        """読みに残った小書きカナ(「ハァ」「ウッセェ」など)を大文字に吸収する。
+
+        単独の小書きはどの単語の発音にも現れない(単語リスト側は format_kana で
+        正規化済み)ため、放置すると行全体の候補が0件になる。
+        トークンをまたぐ組み合わせ(「シ」+「ェ」)も拾えるよう行単位で連結して正規化する。
+        absorb_small_kana は1文字→1文字の置換で長さを変えないので、そのまま
+        トークン境界で切り戻せる(surfaceとの位置対応も崩さない)。
+        """
+        joined = "".join(
+            t["pronunciation"] if isinstance(t.get("pronunciation"), str) else "" for t in tokens
+        )
+        absorbed = absorb_small_kana(joined)
+        if absorbed == joined:
+            return
+        pos = 0
+        for token in tokens:
+            pron = token.get("pronunciation")
+            if not isinstance(pron, str):
+                continue
+            token["pronunciation"] = absorbed[pos : pos + len(pron)]
+            pos += len(pron)
 
     def get_yomi_from_tokens(self, tokens: list[Token]) -> str:
         yomi = "".join(v["pronunciation"] if v.get("pronunciation") else "" for v in tokens)

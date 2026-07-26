@@ -278,6 +278,64 @@ def small_vowel_to_large(text: str) -> str:
     return replaced_text
 
 
+#: 小書きカナ→大文字カナの対応(ひらがな・カタカナ両方)
+_SMALL_TO_LARGE_KANA = {
+    "ァ": "ア",
+    "ィ": "イ",
+    "ゥ": "ウ",
+    "ェ": "エ",
+    "ォ": "オ",
+    "ヮ": "ワ",
+    "ャ": "ヤ",
+    "ュ": "ユ",
+    "ョ": "ヨ",
+    "ぁ": "あ",
+    "ぃ": "い",
+    "ぅ": "う",
+    "ぇ": "え",
+    "ぉ": "お",
+    "ゎ": "わ",
+    "ゃ": "や",
+    "ゅ": "ゆ",
+    "ょ": "よ",
+}
+#: 直前のカナと組み合わせて1モーラを構成する小書きカナの並び(カタカナ正規化後で判定)。
+#: KanaToSyllable().split が1ユニットとして切り出す組み合わせ(kana_pattern の multi)と
+#: 同じ集合にしておくこと。ここで残した並びが split で分かれると単独の小書きが残る
+_STICKY_SMALL_KANA_RE = re.compile(
+    r"^(?:[ウクスツヌフムユルグズヅブプヴ][ァィェォ]"  # ファ・ウィ・フェ・フォ など
+    r"|[テデ][ャィュョ]"  # ティ・ディ・テュ など
+    r"|[イキシチニヒミリギジヂビピ][ャュョ]"  # 拗音(キャ・シュ・ニョ など)
+    r"|[キシチニヒミリギジヂビピ]ェ"  # シェ・チェ・ジェ など
+    r"|[トド]ゥ)$"  # トゥ・ドゥ
+)
+
+
+def absorb_small_kana(text: str) -> str:
+    """直前のカナと組み合わせて1モーラにならない小書きカナを大文字に直す。
+
+    「ハァ」「ウッセェ」「リィ」のような引き伸ばし表記や、単独で現れた小書きが対象。
+    置換は必ず1文字→1文字で文字列長を変えないので、読みと表層の位置対応
+    (char_index / mora)を使う呼び出し元を壊さない。促音ッ・長音ーには触らない。
+
+    本体JS(kanaToSyllable.js の absorbSmallKana)と同じ挙動。
+    """
+    if not text:
+        return text
+    chars: list[str] = []
+    for i, c in enumerate(text):
+        large = _SMALL_TO_LARGE_KANA.get(c)
+        if large is None:
+            chars.append(c)
+            continue
+        # 直前の文字は正規化後のものを見る(「スゥィ」→「スウィ」のように、
+        # 大文字化した結果くっつけられるようになる並びを拾うため)
+        prev = hira_to_kata(chars[i - 1]) if i > 0 else ""
+        sticky = bool(_STICKY_SMALL_KANA_RE.match(prev + hira_to_kata(c)))
+        chars.append(c if sticky else large)
+    return "".join(chars)
+
+
 def remove_bar_and_sokuon_reputation(text: str) -> str:
     """ーとッの不自然な並びを削除する(removeBarAndSokuonReputation)。"""
     text = re.sub(r"ー+", "ー", text)  # ーの連続を1文字にする
