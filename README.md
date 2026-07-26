@@ -67,6 +67,28 @@ param = {"SAME_PHRASE_BREAK_REWARD": 0, "MID_PHRASE_BREAK_PENALTY": 20,
          "WORD_NUMBER_PENALTY": 20, "VARIATION_COST": 20 * r}
 ```
 
+### ユニット位置別の重み付けで合わせる音を優先する
+
+`generate` / `generate_from_tokens` の省略可能な `weights_per_line` に、行ごとの
+「音節ユニット位置別の重み」(非負float、長さはその行の音節ユニット数)を渡すと、
+その位置の音の一致を重く見て単語を選びます。長い音符の音を優先して合わせたい、
+といった用途向けです。**省略時(None)は従来と完全に同一の動作**です。
+
+```python
+# 1行目の先頭2ユニット(=長い音符)を重く、残りは軽く
+results = app.soramimi_maker.generate_from_tokens(
+    tokens_list, db, param, weights_per_line=[[3, 3, 1, 1, 1]]
+)
+```
+
+重みは行ごとに**平均1へ正規化**されます(`w_i * n / sum(w)`)。単語数ペナルティや
+文節境界の報酬/ペナルティのような「位置を持たない定数項」との相対スケールを保つ
+ためで、重みの絶対値ではなく行内の相対的な強弱だけが効きます。長さ不一致や
+合計0以下・負値などの不正な重みは warning ログを出してその行を重みなし扱いにします。
+
+現時点で重みが掛かるのは音の一致距離のみで、`VARIATION_COST` ・
+`WORD_NUMBER_PENALTY` ・文節境界項は無重みのままです。
+
 ## 本体JSとの互換性
 
 - モジュールは本体 `frontend/src/lib` の各JSファイルと1:1対応です( `kanaToSyllable.js` → `kana_to_syllable.py` など)。
