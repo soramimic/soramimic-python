@@ -23,9 +23,16 @@ class Variation(list):
 
     JSでは配列に ``.vcost`` プロパティを直接生やしている。list のサブクラスなので
     既存の list[str] を期待するコードとそのまま互換。
+
+    ``src`` は各出力ユニットが由来する入力音節のindex列(長さは self と同じ)。
+    ン→ー化や促音削除でユニット数が変わっても、位置別の重み(ユニット位置別
+    スコアリング)を元音節の位置に対応づけられるようにするために持たせる。
     """
 
     vcost: int = 0
+    # クラス既定は空リスト。get_variation は必ずインスタンス側で上書きするため
+    # 共有されるのは「srcを持たない手書きVariation」だけで、読み取り専用に扱う。
+    src: list[int] = []
 
 
 def char_to_consonant(char: str) -> str:
@@ -450,11 +457,16 @@ class KanaToSyllable:
         (母音連続→ー)=0。返り値は従来同様のユニット配列(文字列配列)だが、
         各配列(Variation)に .vcost 属性で操作回数の合計を持たせる。
         variation の各要素は {"u": ユニット配列, "c": 操作数}。
+
+        また各 Variation に .src(出力ユニットごとの入力音節index)を持たせる。
+        ユニット数が変わる変種(アン→アー等)でも位置別の重みを元の音節位置に
+        対応づけられるようにするため。
         """
         result: list[list[dict[str, Any]]] = []
+        src_index: list[int] = []  # result[j] が由来する syllables のindex
         if not syllables:
             return []
-        for syllable in syllables:
+        for syllable_index, syllable in enumerate(syllables):
             if syllable is None:
                 continue
             variation: list[dict[str, Any]] = []
@@ -512,6 +524,7 @@ class KanaToSyllable:
             else:  # 1モーラ
                 variation.append({"u": [syllable], "c": 0})
             result.append(variation)
+            src_index.append(syllable_index)
 
         out: list[list[str]] = []
         for combo in product(*result):
@@ -519,6 +532,8 @@ class KanaToSyllable:
             flat = Variation(x for e in combo for x in e["u"] if x != "")
             if len(flat) != 0:
                 flat.vcost = sum(e["c"] for e in combo)  # 操作回数の合計
+                # 平坦化と同じ順序・同じ除外条件で元音節indexを並べる
+                flat.src = [src_index[j] for j, e in enumerate(combo) for x in e["u"] if x != ""]
                 out.append(flat)
         return out
 
