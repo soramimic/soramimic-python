@@ -9,8 +9,6 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .utils import product
-
 
 def _match_all(pattern: re.Pattern[str], text: str) -> list[str] | None:
     """JSの ``String.match(/.../g)`` 相当。マッチが無ければ None を返す。"""
@@ -378,6 +376,93 @@ class KanaToMora:
         return _match_all(self._re, text)
 
 
+#: 1音節ぶんの変種。(空文字を除いたユニット列, 操作数c)。
+SyllableVariant = tuple[tuple[str, ...], int]
+
+#: 音節文字列 → 変種列 のキャッシュ。音節の種類はカナの組み合わせ上せいぜい数千で、
+#: 単語リスト1本の中で同じ音節が何万回も現れるため、正規表現判定を使い回す。
+_SYLLABLE_VARIATION_CACHE: dict[str, tuple[SyllableVariant, ...]] = {}
+
+_RE_BARE_VOWEL = re.compile(r"^[アイウエオ]$")
+_RE_BARE_NQ = re.compile(r"^[ンッ]$")
+_RE_ENDS_VOWEL = re.compile(r"[アイウエオ]$")
+
+
+def syllable_variations(syllable: str) -> tuple[SyllableVariant, ...]:
+    """1音節の発音バリエーションを (ユニット列, 操作数) の列で返す。
+
+    kanaToSyllable.js の getVariation 内の分岐そのもの。JS版が最後に
+    ``flatMap(o=>o.u).filter(v=>v!=="")`` で落とす空ユニットは、どの分岐でも
+    「空だけの変種」としてしか現れないので、ここで先に除いておく(結果は同じ)。
+    """
+    cached = _SYLLABLE_VARIATION_CACHE.get(syllable)
+    if cached is not None:
+        return cached
+
+    variation: list[tuple[list[str], int]]
+    if _RE_BARE_VOWEL.match(syllable):  # アイウエオは先に処理
+        variation = [([syllable], 0)]
+    elif _RE_BARE_NQ.match(syllable):
+        variation = [([syllable], 0), ([""], 1)]  # 裸ン・ッの削除
+    elif syllable == "ンー":  # ンー→["ン","ン"],["ン"],[""]
+        variation = [
+            (["ン", "ン"], 1),  # ー→ン変換
+            (["ン"], 1),  # ー削除
+            ([""], 2),  # ン削除+ー削除
+        ]
+    elif syllable == "ンッ":  # ンッ→["ン","ッ"],["ン"],["ッ"],[""]
+        variation = [
+            (["ン", "ッ"], 0),
+            (["ン"], 1),  # ッ削除
+            (["ッ"], 1),  # ン削除
+            ([""], 2),
+        ]
+    elif syllable.endswith("ーン"):  # ex: アーン→["アー","ン"],["アー"]
+        head = syllable[:-2]
+        variation = [([head + "ー", "ン"], 0), ([head + "ー"], 1)]  # ン削除
+    elif syllable.endswith("ンッ"):  # ex: アンッ→[...]
+        head = syllable[:-2]
+        variation = [
+            ([head, "ン", "ッ"], 0),
+            ([head, "ン"], 1),  # ッ削除
+            ([head + "ー", "ッ"], 1),  # ン→ー化
+            ([head + "ー"], 2),  # ン→ー化+ッ削除
+            ([head, "ッ"], 1),  # ン削除
+        ]
+    elif syllable.endswith("ーッ"):  # ex. アーッ→["アー","ッ"],["アー"]
+        head = syllable[:-2]
+        variation = [([head + "ー", "ッ"], 0), ([head + "ー"], 1)]  # ッ削除
+    elif syllable.endswith("ー"):  # ex. アー→["アー"]
+        variation = [([syllable[:-1] + "ー"], 0)]
+    elif syllable.endswith("ッ"):  # ex. アッ→["ア","ッ"],["ア"],["アー"]
+        head = syllable[:-1]
+        variation = [
+            ([head, "ッ"], 0),
+            ([head], 1),  # ッ削除
+            ([head + "ー"], 1),  # ッ→ー置換(単一操作でッ↔ーを閉じる)
+        ]
+    elif syllable.endswith("ン"):  # ex. アン→["ア","ン"],["アー"],["ア"]
+        head = syllable[:-1]
+        variation = [
+            ([head, "ン"], 0),
+            ([head + "ー"], 1),  # ン→ー化
+            ([head], 1),  # ン削除(単一操作でン削除を閉じる)
+        ]
+    elif _RE_ENDS_VOWEL.search(syllable):  # カア→["カ","ア"],["カー"]
+        head = syllable[:-1]
+        vowel = syllable[len(syllable) - 1]
+        variation = [
+            ([head, vowel], 0),
+            ([head + "ー"], 0),  # 表記ゆれ(母音連続→ー)扱いで無コスト
+        ]
+    else:  # 1モーラ
+        variation = [([syllable], 0)]
+
+    result = tuple((tuple(u for u in units if u != ""), cost) for units, cost in variation)
+    _SYLLABLE_VARIATION_CACHE[syllable] = result
+    return result
+
+
 class KanaToSyllable:
     """kanaToSyllable.js の KanaToSyllable() 相当。"""
 
@@ -449,92 +534,102 @@ class KanaToSyllable:
     def split(self, text: str) -> list[str] | None:
         return _match_all(self._re_all, text)
 
-    def get_variation(self, syllables: list[str] | None) -> list[list[str]]:
+    def get_variation(
+        self, syllables: list[str] | None, max_units: int | None = None
+    ) -> list[list[str]]:
         """カナ発音のバリエーションを取得する(getVariation)。
 
         各変種に変換操作回数(コスト)を付与する(#105)。ン→ー化・ッ削除・
         裸ン/ッ削除・ー削除=各1操作、複合音節は合計、無変換や表記ゆれ
         (母音連続→ー)=0。返り値は従来同様のユニット配列(文字列配列)だが、
         各配列(Variation)に .vcost 属性で操作回数の合計を持たせる。
-        variation の各要素は {"u": ユニット配列, "c": 操作数}。
 
         また各 Variation に .src(出力ユニットごとの入力音節index)を持たせる。
         ユニット数が変わる変種(アン→アー等)でも位置別の重みを元の音節位置に
         対応づけられるようにするため。
+
+        max_units: 生成する変種のユニット数の上限(既定 None = 無制限で JS と同一)。
+            指定すると ``[v for v in get_variation(s) if len(v) <= max_units]`` と
+            **完全に同じリスト**(順序・vcost・src 込み)を返す。違いは、超過する
+            変種を作ってから捨てるのではなく直積を途中で枝刈りする点だけ。
+            変種数は音節数に対して指数的に増える(ン・ッ・母音連続を含む音節が
+            それぞれ2〜5通りに分岐する)ので、長い読みの単語では上限指定が効く。
+            単語リスト側の変種は「ユニット数が完全一致する変種」としか照合されない
+            (maker._ld は長さ不一致を Infinity にする)ため、生成対象の歌詞行の
+            最大ユニット数を上限に渡せば結果は変わらない。
         """
-        result: list[list[dict[str, Any]]] = []
-        src_index: list[int] = []  # result[j] が由来する syllables のindex
         if not syllables:
             return []
+
+        variants_list: list[tuple[SyllableVariant, ...]] = []
+        src_index: list[int] = []  # variants_list[j] が由来する syllables のindex
         for syllable_index, syllable in enumerate(syllables):
             if syllable is None:
                 continue
-            variation: list[dict[str, Any]] = []
-            if re.match(r"^[アイウエオ]$", syllable):  # アイウエオは先に処理
-                variation.append({"u": [syllable], "c": 0})
-            elif re.match(r"^[ンッ]$", syllable):
-                variation.append({"u": [syllable], "c": 0})
-                variation.append({"u": [""], "c": 1})  # 裸ン・ッの削除
-            elif syllable == "ンー":  # ンー→["ン","ン"],["ン"],[""]
-                variation.append({"u": ["ン", "ン"], "c": 1})  # ー→ン変換
-                variation.append({"u": ["ン"], "c": 1})  # ー削除
-                variation.append({"u": [""], "c": 2})  # ン削除+ー削除
-            elif syllable == "ンッ":  # ンッ→["ン","ッ"],["ン"],["ッ"],[""]
-                variation.append({"u": ["ン", "ッ"], "c": 0})
-                variation.append({"u": ["ン"], "c": 1})  # ッ削除
-                variation.append({"u": ["ッ"], "c": 1})  # ン削除
-                variation.append({"u": [""], "c": 2})
-            elif syllable.endswith("ーン"):  # ex: アーン→["アー","ン"],["アー"]
-                head = syllable[:-2]
-                variation.append({"u": [head + "ー", "ン"], "c": 0})
-                variation.append({"u": [head + "ー"], "c": 1})  # ン削除
-            elif syllable.endswith("ンッ"):  # ex: アンッ→[...]
-                head = syllable[:-2]
-                variation.append({"u": [head, "ン", "ッ"], "c": 0})
-                variation.append({"u": [head, "ン"], "c": 1})  # ッ削除
-                variation.append({"u": [head + "ー", "ッ"], "c": 1})  # ン→ー化
-                variation.append({"u": [head + "ー"], "c": 2})  # ン→ー化+ッ削除
-                variation.append({"u": [head, "ッ"], "c": 1})  # ン削除
-            elif syllable.endswith("ーッ"):  # ex. アーッ→["アー","ッ"],["アー"]
-                head = syllable[:-2]
-                variation.append({"u": [head + "ー", "ッ"], "c": 0})
-                variation.append({"u": [head + "ー"], "c": 1})  # ッ削除
-            elif syllable.endswith("ー"):  # ex. アー→["アー"]
-                head = syllable[:-1]
-                variation.append({"u": [head + "ー"], "c": 0})
-            elif syllable.endswith("ッ"):
-                head = syllable[:-1]
-                variation.append(
-                    {"u": [head, "ッ"], "c": 0}
-                )  # ex. アッ→["ア","ッ"],["ア"],["アー"]
-                variation.append({"u": [head], "c": 1})  # ッ削除
-                variation.append({"u": [head + "ー"], "c": 1})  # ッ→ー置換(単一操作でッ↔ーを閉じる)
-            elif syllable.endswith("ン"):  # ex. アン→["ア","ン"],["アー"],["ア"]
-                head = syllable[:-1]
-                variation.append({"u": [head, "ン"], "c": 0})
-                variation.append({"u": [head + "ー"], "c": 1})  # ン→ー化
-                variation.append({"u": [head], "c": 1})  # ン削除(単一操作でン削除を閉じる)
-            elif re.search(r"[アイウエオ]$", syllable):  # カア→["カ","ア"],["カー"]
-                head = syllable[:-1]
-                vowel = syllable[len(syllable) - 1]
-                variation.append({"u": [head, vowel], "c": 0})
-                variation.append(
-                    {"u": [head + "ー"], "c": 0}
-                )  # 表記ゆれ(母音連続→ー)扱いで無コスト
-            else:  # 1モーラ
-                variation.append({"u": [syllable], "c": 0})
-            result.append(variation)
+            variants_list.append(syllable_variations(syllable))
             src_index.append(syllable_index)
+        if not variants_list:
+            return []
 
+        n = len(variants_list)
+        # suffix_min[i] = i番目以降の音節が最低でも生むユニット数(枝刈りの下界)
+        suffix_min = [0] * (n + 1)
+        for i in range(n - 1, -1, -1):
+            suffix_min[i] = suffix_min[i + 1] + min(len(units) for units, _ in variants_list[i])
+        if max_units is not None and suffix_min[0] > max_units:
+            return []
+
+        # 音節ごとの「継ぎ足す断片」(ユニット列, 元音節index列, 操作数, ユニット数)。
+        # 直積の内側ループから追い出すため、あらかじめリスト化しておく。
+        chunks_per_level = [
+            [(list(units), [src_index[i]] * len(units), cost, len(units)) for units, cost in level]
+            for i, level in enumerate(variants_list)
+        ]
+
+        # 直積を深さ優先で辿り、作業バッファ units_buf / src_buf を伸ばし縮みさせながら
+        # 葉でだけコピーする。utils.product のように全組み合わせを一度に持たないので、
+        # 使うメモリは出力ぶんだけで済む。最後の音節を最も速く回すため並び順も product と同じ。
+        # 読みが長いと再帰では深さ制限に当たるので明示スタックで回す。
         out: list[list[str]] = []
-        for combo in product(*result):
-            # JSの v.flatMap(o=>o.u).filter(v2=>v2!=="")。空ユニットは平坦化後に除外
-            flat = Variation(x for e in combo for x in e["u"] if x != "")
-            if len(flat) != 0:
-                flat.vcost = sum(e["c"] for e in combo)  # 操作回数の合計
-                # 平坦化と同じ順序・同じ除外条件で元音節indexを並べる
-                flat.src = [src_index[j] for j, e in enumerate(combo) for x in e["u"] if x != ""]
-                out.append(flat)
+        units_buf: list[str] = []
+        src_buf: list[int] = []
+        cursor = [0] * n  # cursor[i] = レベルiで次に試す断片のindex
+        pushed = [0] * n  # pushed[i] = レベルiがいま積んでいるユニット数
+        costs = [0] * (n + 1)  # costs[i] = レベルiに入った時点の操作数合計
+        level = 0
+        last = n - 1
+        while level >= 0:
+            if pushed[level]:  # 直前に積んだ断片を戻す
+                del units_buf[len(units_buf) - pushed[level] :]
+                del src_buf[len(src_buf) - pushed[level] :]
+                pushed[level] = 0
+            chunks = chunks_per_level[level]
+            i = cursor[level]
+            if i >= len(chunks):
+                level -= 1
+                continue
+            cursor[level] = i + 1
+            chunk_units, chunk_src, chunk_cost, chunk_len = chunks[i]
+            if (
+                max_units is not None
+                and len(units_buf) + chunk_len + suffix_min[level + 1] > max_units
+            ):
+                continue
+            units_buf.extend(chunk_units)
+            src_buf.extend(chunk_src)
+            pushed[level] = chunk_len
+            cost = costs[level] + chunk_cost
+            if level == last:
+                if units_buf:  # JSの filter(v=>v!=="") の結果が空になる変種は捨てる
+                    flat = Variation(units_buf)
+                    flat.vcost = cost  # 操作回数の合計
+                    flat.src = list(src_buf)
+                    out.append(flat)
+                continue
+            costs[level + 1] = cost
+            level += 1
+            cursor[level] = 0
+            pushed[level] = 0
         return out
 
 
@@ -624,8 +719,10 @@ class KanaConverter:
     def separate(self, text: str) -> list[str] | None:
         return self._k2s.split(text)
 
-    def get_pronunciation_variation(self, syllables: list[str] | None) -> list[list[str]]:
-        return self._k2s.get_variation(syllables)
+    def get_pronunciation_variation(
+        self, syllables: list[str] | None, max_units: int | None = None
+    ) -> list[list[str]]:
+        return self._k2s.get_variation(syllables, max_units)
 
     is_same_kana = staticmethod(is_same_kana)
     is_same_vowel = staticmethod(is_same_vowel)

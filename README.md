@@ -89,6 +89,27 @@ results = app.soramimi_maker.generate_from_tokens(
 現時点で重みが掛かるのは音の一致距離のみで、`VARIATION_COST` ・
 `WORD_NUMBER_PENALTY` ・文節境界項は無重みのままです。
 
+### 大きな単語リストの前処理を速くする(`max_units`)
+
+単語リストの前処理( `parse_tidy` / `parse_plain` )は、各単語の読みからン・ッ・母音連続
+の揺れを展開した**発音バリエーション**を全通り作ります。この数は音節数に対して指数的に
+増える(該当する音節1つにつき2〜5通りに分岐する)ため、極端に長い読みが1語混じるだけで
+前処理が何分もかかることがあります。`format_kana` が本体JS由来のバグで「英字を複数語含む
+表層」の読みを繰り返してしまうので、英名入りの単語リストでは実際に起こります。
+
+バリエーションは**ユニット数が完全一致するターゲットとしか照合されない**
+( `maker._ld` は長さ不一致を Infinity にする)ので、生成対象の歌詞行の最大ユニット数を
+超えるバリエーションは作っても使われません。`max_units` を渡すとその上限で直積を
+枝刈りします。
+
+```python
+db = app.word_list.parse_tidy(csv_text, "", max_units=40)
+```
+
+結果は `{k: v for k, v in parse_tidy(csv_text, "").items() if k <= max_units}` と完全に
+同一です(順序・ `vcost` ・ `src` 込み)。**省略時(None)は従来と完全に同一の動作**なので、
+上限を歌詞行の最大ユニット数以上にしておけば生成結果は変わりません。
+
 ## 本体JSとの互換性
 
 - モジュールは本体 `frontend/src/lib` の各JSファイルと1:1対応です( `kanaToSyllable.js` → `kana_to_syllable.py` など)。

@@ -185,9 +185,15 @@ class TextAnalyzer:
     def yomi_to_syllable(self, yomi: str) -> list[str] | None:
         return self.k2s.split(yomi)
 
-    def syllable_to_variation(self, syllables: list[str] | None) -> list[list[str]]:
-        return self.k2s.get_variation(syllables)
+    def syllable_to_variation(
+        self, syllables: list[str] | None, max_units: int | None = None
+    ) -> list[list[str]]:
+        return self.k2s.get_variation(syllables, max_units)
 
-    def yomi_to_variation(self, yomi: str) -> list[list[str]]:
+    def yomi_to_variation(self, yomi: str, max_units: int | None = None) -> list[list[str]]:
+        """読みを発音バリエーション(ユニット列)の一覧にする。
+
+        max_units は KanaToSyllable.get_variation と同じ意味(既定 None = 無制限)。
+        """
         sep = self.k2s.split(yomi)
-        return self.k2s.get_variation(sep)
+        return self.k2s.get_variation(sep, max_units)
