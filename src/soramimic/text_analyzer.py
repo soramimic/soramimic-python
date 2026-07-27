@@ -113,8 +113,10 @@ class TextAnalyzer:
         return remove_sign(yomi)
 
     def format_kana(self, text: str) -> str:
-        # JSバグを忠実に再現: マッチごとに text 全体を toKana した結果で置換する。
-        text = re.sub(r"[a-zA-Z']+", lambda m: self.english.to_kana(text), text)
+        # 英字の並びは、マッチした部分だけをカナ化して置換する。
+        # (以前は text 全体を to_kana した結果で置換しており、英字がk箇所あると
+        #  読みが約k+1倍に膨張して後段のバリエーション展開が指数爆発していた)
+        text = re.sub(r"[a-zA-Z']+", lambda m: self.english.to_kana(m.group(0)), text)
         text = hira_to_kata(text)
         text = remove_sign(text)
         text = remove_unnatural_kana_pattern(text)

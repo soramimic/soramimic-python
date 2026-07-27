@@ -18,5 +18,25 @@
  {
   "input": "きゃっほー!",
   "output": "キャッホー"
+ },
+ {
+  "input": "メガリザードンX",
+  "output": "メガリザードンエクス"
+ },
+ {
+  "input": "ポケモンGO",
+  "output": "ポケモンゴー"
+ },
+ {
+  "input": "AとBとC",
+  "output": "エイトビートシー"
+ },
+ {
+  "input": "Ma's night monkey",
+  "output": "マエスナイトモンキー"
+ },
+ {
+  "input": "Red-Throated Rainbow-Skink(アカノドニジトカゲ)",
+  "output": "レッドスローテッドレインボーエスキンケイアカノドニジトカゲ"
  }
 ]

@@ -83,7 +83,20 @@ writeFileSync(join(OUTDIR, "kana_to_syllable.json"), JSON.stringify(k2sFixture, 
 
 // ---------------------------------------------------------------
 // 2. formatKana
-const formatKanaInputs = ["こんにちは", "ラーメン食べたい".replace(/[^ぁ-ヿ]/g, ""), "love", "ヰヱヲ", "きゃっほー!"];
+const formatKanaInputs = [
+  "こんにちは",
+  "ラーメン食べたい".replace(/[^ぁ-ヿ]/g, ""),
+  "love",
+  "ヰヱヲ",
+  "きゃっほー!",
+  // 英字が日本語に混ざるケース(マッチ部分だけがカナ化されること)
+  "メガリザードンX",
+  "ポケモンGO",
+  // 英字が複数箇所あるケース(読みが膨張しないこと)
+  "AとBとC",
+  "Ma's night monkey",
+  "Red-Throated Rainbow-Skink(アカノドニジトカゲ)",
+];
 const formatKanaFixture = formatKanaInputs.map((t) => ({ input: t, output: textAnalyzer.formatKana(t) }));
 writeFileSync(join(OUTDIR, "format_kana.json"), JSON.stringify(formatKanaFixture, null, 1));
 
