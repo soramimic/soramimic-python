@@ -170,13 +170,26 @@ class WordList:
         self.text_analyzer = text_analyzer
         self._word_list: dict[str, ResultDB] = {}
 
-    def parse_tidy(self, text: str, query_str: str = "") -> ResultDB:
-        return self._load_database_csv_text(text, query_str)
+    def parse_tidy(self, text: str, query_str: str = "", max_units: int | None = None) -> ResultDB:
+        """tidy CSV から単語DBを作る。
 
-    def parse_plain(self, text: str) -> ResultDB:
-        return self._load_database_text(text)
+        max_units: DBに載せる発音バリエーションのユニット数の上限(既定 None = 無制限)。
+            指定すると ``{k: v for k, v in parse_tidy(text, q).items() if k <= max_units}``
+            と完全に同じDBを返す(上限超えのバケットは元々そのユニット数の歌詞行が
+            無ければ引かれない)。バリエーション数は読みの音節数に対して指数的に
+            増えるため、極端に長い読み(英字表記の複数語など)を含む単語リストでは
+            前処理時間とメモリを桁で削れる。生成対象の歌詞行の最大ユニット数以上を
+            渡すこと。
+        """
+        return self._load_database_csv_text(text, query_str, max_units)
 
-    def _load_database_csv_text(self, text: str, query_str: str) -> ResultDB:
+    def parse_plain(self, text: str, max_units: int | None = None) -> ResultDB:
+        """1行1語のプレーンテキストから単語DBを作る(max_units は parse_tidy と同じ)。"""
+        return self._load_database_text(text, max_units)
+
+    def _load_database_csv_text(
+        self, text: str, query_str: str, max_units: int | None = None
+    ) -> ResultDB:
         text = re.sub(r"\s*,\s*", ",", text)
         lines = re.split(r"\r\n|\n|\r", text)
         header = lines[0].split(",")
@@ -233,7 +246,7 @@ class WordList:
             if not obj["pronunciation"]:
                 continue
 
-            pvariations = self.text_analyzer.yomi_to_variation(obj["pronunciation"])
+            pvariations = self.text_analyzer.yomi_to_variation(obj["pronunciation"], max_units)
             for p in pvariations:
                 plen = len(p)
                 if plen not in resultdb:
@@ -272,6 +285,6 @@ class WordList:
         db = header + csvlines
         return "\n".join(",".join(row) for row in db)
 
-    def _load_database_text(self, text: str) -> ResultDB:
+    def _load_database_text(self, text: str, max_units: int | None = None) -> ResultDB:
         csvtext = self._plain_to_csv(text)
-        return self._load_database_csv_text(csvtext, "")
+        return self._load_database_csv_text(csvtext, "", max_units)
