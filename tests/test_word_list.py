@@ -29,6 +29,21 @@ def test_parse_tidy_basic(pieces: dict[str, Any]) -> None:
     assert neko["id"] == "1"
 
 
+def test_parse_tidy_trailing_comma_does_not_swallow_next_line(pieces: dict[str, Any]) -> None:
+    """最終列が空(=行末がカンマ)の行があっても次行の単語を飲み込まない(#77追従)。
+
+    空白正規化に `\\s` を使うと改行も消費されるため、行末カンマの直後の
+    改行がカンマ前後の空白として除去され、次行と結合して単語が消える不具合の
+    再現テスト。
+    """
+    wl = pieces["word_list"]
+    csv = "id,original,surface,pronunciation\n1,ネコ,ネコ,ネコ,\n2,イヌ,イヌ,イヌ"
+    db = wl.parse_tidy(csv, "")
+    surfaces = {w["surface"] for bucket in db.values() for w in bucket}
+    assert "ネコ" in surfaces
+    assert "イヌ" in surfaces  # 修正前はここで消える
+
+
 def test_parse_tidy_where(pieces: dict[str, Any]) -> None:
     wl = pieces["word_list"]
     csv = (

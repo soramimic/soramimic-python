@@ -190,7 +190,10 @@ class WordList:
     def _load_database_csv_text(
         self, text: str, query_str: str, max_units: int | None = None
     ) -> ResultDB:
-        text = re.sub(r"\s*,\s*", ",", text)
+        # \s は改行にもマッチするため、行末カンマ(最終列が空)の行があると
+        # 次の行を飲み込んでしまう。空白正規化は行内の空白(スペース/タブ)のみ
+        # 対象にする(soramimic#77 のJS側修正に追従)。
+        text = re.sub(r"[ \t]*,[ \t]*", ",", text)
         lines = re.split(r"\r\n|\n|\r", text)
         header = lines[0].split(",")
         df: list[list[str]] = []
