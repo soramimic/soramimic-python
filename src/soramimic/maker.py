@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import math
 from collections.abc import Callable, Sequence
+from operator import itemgetter
 from typing import Any
 
 from .kana_similarity import KanaSimilarity, SimTable
@@ -23,6 +24,148 @@ Word = dict[str, Any]
 INF = float("inf")
 
 logger = logging.getLogger(__name__)
+
+_SIM_KEY = itemgetter("sim")
+_MISSING = object()
+
+
+def _column_sums(rvs: list[list[float]], icols: list[list[int]], n: int) -> list[float]:
+    """ユニット位置ごとの距離を、バケツ内の全単語ぶんまとめて足し込む。
+
+    rvs[i][j]  : 候補の位置 i のユニットと、ユニットid j のカナとの距離
+    icols[i][k]: バケツの k 番目の単語の、位置 i のユニットid
+
+    返すのは各単語の合計距離で、``_ld`` が単語ごとに ``score += kana_dist[c[i]][p[i]]``
+    と積み上げるのと同じ値になる。``x + r0[a] + r1[b] + ...`` は左結合で評価される
+    ので加算の順序も 0.0, 位置0, 位置1, ... のままで、浮動小数の丸めまで一致する。
+    1回の内包表記で最大4位置ぶんまとめるのは、中間リストの生成と zip の往復を減らす
+    ためだけの措置(位置ごとに1回ずつ回すより約2倍速い)。
+    """
+    totals = [0.0] * n
+    i = 0
+    length = len(rvs)
+    while i < length:
+        rest = length - i
+        if rest >= 4:
+            r0, r1, r2, r3 = rvs[i], rvs[i + 1], rvs[i + 2], rvs[i + 3]
+            c0, c1, c2, c3 = icols[i], icols[i + 1], icols[i + 2], icols[i + 3]
+            totals = [
+                x + r0[a] + r1[b] + r2[c] + r3[d]
+                for x, a, b, c, d in zip(totals, c0, c1, c2, c3, strict=True)
+            ]
+            i += 4
+        elif rest == 3:
+            r0, r1, r2 = rvs[i], rvs[i + 1], rvs[i + 2]
+            c0, c1, c2 = icols[i], icols[i + 1], icols[i + 2]
+            totals = [
+                x + r0[a] + r1[b] + r2[c] for x, a, b, c in zip(totals, c0, c1, c2, strict=True)
+            ]
+            i += 3
+        elif rest == 2:
+            r0, r1 = rvs[i], rvs[i + 1]
+            c0, c1 = icols[i], icols[i + 1]
+            totals = [x + r0[a] + r1[b] for x, a, b in zip(totals, c0, c1, strict=True)]
+            i += 2
+        else:
+            r0, c0 = rvs[i], icols[i]
+            totals = [x + r0[a] for x, a in zip(totals, c0, strict=True)]
+            i += 1
+    return totals
+
+
+class _WordlistIndex:
+    """単語DB(ユニット数 → 単語リスト)を get_similar_word 用に前処理したもの。
+
+    get_similar_word の内側は「候補(歌詞側の発音バリエーション)× 単語DBの1バケツ」
+    という総当たりで、うっせぇわ×駅名(9,467行)では距離計算が2千万回近く走る。
+    そこを単語ごとの Python ループではなく「ユニット位置ごとの列」をまとめて回す
+    形に変えるため、バケツごとに次を1度だけ作って使い回す。
+
+      * prons   : 単語ごとの発音(ユニット列)
+      * vcosts  : 単語ごとの変種コスト
+      * icols   : 位置 i のユニットidを全単語ぶん並べた列(prons の転置)
+
+    ユニットidは kana_dist のキーの並び順で振った通し番号で、距離の引き当てを
+    「辞書をカナ文字列で引く」から「リストを整数で引く」に置き換えるためのもの。
+    kana_dist に載っていないユニットには末尾の予備id(_unit_ids の要素数)を割り当て、
+    行ベクトル側でそこを Infinity にしておく。_ld が未知ユニットで Infinity を返すのと
+    同じ結果になり、そういう単語が数語混ざっているだけでバケツ全体が遅い経路に
+    落ちるのを防げる(学者リストなどで実際に起きる)。
+
+    icols は「全単語のユニット数がバケツのキーと一致する」ときだけ作る。
+    一致しないバケツ(_ld が長さ不一致で Infinity を返す)は None にして、
+    従来どおり _ld を単語ごとに呼ぶ。
+
+    kana_dist を握るのは icols・行ベクトルが kana_dist に依存するため。1回の generate の
+    間 kana_dist は不変なので、インデックスは generate_from_tokens で1つ作って使い回す。
+    """
+
+    __slots__ = (
+        "wordlist",
+        "kana_dist",
+        "_unit_ids",
+        "_row_values",
+        "_cache",
+        "_orders",
+    )
+
+    def __init__(self, wordlist: dict[int, list[Word]], kana_dist: SimTable) -> None:
+        self.wordlist = wordlist
+        self.kana_dist = kana_dist
+        self._unit_ids = {u: i for i, u in enumerate(kana_dist)}
+        self._row_values: dict[str, list[float] | None] = {}
+        self._cache: dict[int, tuple[list[Any], list[int], list[list[int]] | None]] = {}
+        self._orders: dict[tuple[str, ...], list[str]] = {}
+
+    def bucket(self, key: int) -> tuple[list[Any], list[int], list[list[int]] | None]:
+        entry = self._cache.get(key)
+        if entry is None:
+            words = self.wordlist[key]
+            prons = [w["pronunciation"] for w in words]
+            vcosts = [w.get("vcost") or 0 for w in words]
+            unit_ids = self._unit_ids
+            unknown = len(unit_ids)  # kana_dist に無いユニット用の予備id
+            icols: list[list[int]] | None = None
+            if all(len(p) == key for p in prons):
+                get = unit_ids.get
+                icols = [[get(p[i], unknown) for p in prons] for i in range(key)]
+            entry = (prons, vcosts, icols)
+            self._cache[key] = entry
+        return entry
+
+    def row_values(self, unit: str) -> list[float] | None:
+        """ユニット unit から見た距離を、ユニットid順に並べたリストで返す。
+
+        末尾に1つだけ Infinity を足してあり、これが「kana_dist に無いユニット」用の
+        予備idに対応する(_ld が未知ユニットで Infinity を返すのと同じ)。
+
+        kana_dist に unit が無い場合と、kana_dist が非対称(行のキーが全体の
+        キー集合と一致しない)場合は None を返し、呼び出し側を _ld の経路に落とす。
+        """
+        values = self._row_values.get(unit, _MISSING)
+        if values is _MISSING:
+            row = self.kana_dist.get(unit)
+            try:
+                values = None if row is None else [row[u] for u in self._unit_ids] + [INF]
+            except KeyError:
+                values = None
+            self._row_values[unit] = values
+        return values  # type: ignore[return-value]
+
+    def id_order(self, bucket_keys: tuple[str, ...], ids: Any) -> list[str]:
+        """走査したバケツの並びに対する「単語idの JS オブジェクト列挙順」を返す。
+
+        get_similar_word は結果を ``js_object_key_order(words.keys())`` の順に
+        並べてから sim で安定ソートする。words の挿入順は「どのバケツをどの順に
+        走査したか」だけで決まる(バケツ内の単語の並びも単語DB側で固定)ので、
+        バケツの並びをキーにキャッシュすれば、同じ単語DBに対する2回目以降の
+        呼び出しでは並べ直しを丸ごと省ける。
+        """
+        order = self._orders.get(bucket_keys)
+        if order is None:
+            order = js_object_key_order(list(ids))
+            self._orders[bucket_keys] = order
+        return order
 
 
 def normalize_unit_weights(
@@ -158,6 +301,35 @@ class SoramimiMaker:
         unit_weights: target(音節単位)の位置別重み。平均1に正規化済みのものを
             渡すこと(normalize_unit_weights)。None なら従来と完全に同一。
         """
+        return self._get_similar_word(
+            _WordlistIndex(wordlist, kana_dist),
+            target,
+            kana_dist,
+            variation_cost,
+            unit_weights,
+        )
+
+    def _get_similar_word(
+        self,
+        index: _WordlistIndex,
+        target: list[str],
+        kana_dist: SimTable,
+        variation_cost: float = 0,
+        unit_weights: Sequence[float] | None = None,
+    ) -> list[Word]:
+        """get_similar_word の本体(前処理済みの単語DBインデックスを受け取る版)。
+
+        出力は素朴な実装(単語ごとに _ld を呼ぶ)とビット単位で同一。速度のために
+        変えたのは「回す順番」だけで、浮動小数の演算順序は変えていない:
+
+          * 距離の合計は _ld と同じくユニット位置 0..L-1 の順に足し込む。
+            単語ごとに足すか、位置ごとに全単語へ足すかは結果を変えない。
+          * 候補(変種)は元と同じ順に見て ``d < sim`` のときだけ更新するので、
+            同点なら先に出てきた候補が残るという性質もそのまま。
+          * kana_dist に無いユニットを含む候補は全単語 Infinity になり
+            ``min(Infinity, sim)`` は sim なので、丸ごと読み飛ばしてよい。
+        """
+        wordlist = index.wordlist
         tmp = self.text_analyzer.syllable_to_variation(target)
         candidates: dict[int, list[list[str]]] = {}
         # 変種ごとの展開済み重み(単語ループの内側で毎回引き直さないよう先に作る)
@@ -172,30 +344,87 @@ class SoramimiMaker:
             candidates[clen].append(c)
             candidate_weights[clen].append(self._expand_weights(c, unit_weights))
 
-        words: dict[str, Word] = {}
-        for i in js_object_key_order([str(k) for k in candidates.keys()]):
+        # 単語idごとの「最良のsim」と「そのときの単語」。素朴版は毎回 {**w, "sim": sim} を
+        # 作ってから捨てていたが、勝ち残った単語ぶんだけ最後に作れば結果は同じで、
+        # 生成する dict の数(= 割り当てとGCの負荷)がバケツをまたぐ重複ぶん減る。
+        best_sim: dict[str, float] = {}
+        best_word: dict[str, Word] = {}
+        bucket_keys = tuple(js_object_key_order([str(k) for k in candidates.keys()]))
+        for i in bucket_keys:
             key = int(i)
-            for w in wordlist[key]:
-                # 共有オブジェクトを直接書き換えるとDPの再帰中に別セグメントの
-                # クエリがsimを上書きし、スコア計算が汚染される(#99)。コピーに載せる
-                sim = INF
-                for ci, c in enumerate(candidates[key]):
-                    # ldの生スコアに変種コスト(ターゲット側 c.vcost + 単語側 w.vcost)を
-                    # 加算した素の合計にする(#105)。旧正規化(÷変種長×音節数)は
-                    # 対角0の新行列(#102/#104)では希釈の副作用だけが残るため廃止。
-                    # 変種コストは位置を持たないので重み付けの対象外(将来の拡張)。
-                    d = (
-                        self._ld(c, w["pronunciation"], kana_dist, candidate_weights[key][ci])
-                        + ((getattr(c, "vcost", 0) or 0) + (w.get("vcost") or 0)) * variation_cost
-                    )
-                    sim = min(d, sim)
-                wid = w["id"]
-                if wid in words and sim > words[wid]["sim"]:
-                    continue
-                words[wid] = {**w, "sim": sim}
+            prons, vcosts, icols = index.bucket(key)
+            n = len(prons)
+            sims: list[float] | None = None
 
-        words2 = [words[wid] for wid in js_object_key_order(list(words.keys()))]
-        words2.sort(key=lambda a: a["sim"])
+            for c, cwts in zip(candidates[key], candidate_weights[key], strict=True):
+                # ターゲット側変種のコストは単語ループに依存しないのでここで1度だけ引く
+                cvcost = getattr(c, "vcost", 0) or 0
+
+                totals: list[float] | None = None
+                if icols is not None:
+                    rvs: list[list[float]] = []
+                    for u in c:
+                        rv = index.row_values(u)
+                        if rv is None:
+                            break
+                        rvs.append(rv)
+                    if len(rvs) == len(c):
+                        if cwts is not None:
+                            # 重みは各ユニットの距離に掛かるので、行ベクトル側に先に掛けておく
+                            # (kana_dist[c[i]][u] * weights[i] と同じ演算・同じ丸め)
+                            scaled = []
+                            for rv, wt in zip(rvs, cwts, strict=True):
+                                sv = [v * wt for v in rv]
+                                # 未知ユニット枠は重みを掛けない(_ld も掛ける前に
+                                # Infinity を返す。重み0だと Infinity*0=nan になる)
+                                sv[-1] = INF
+                                scaled.append(sv)
+                            rvs = scaled
+                        totals = _column_sums(rvs, icols, n)
+                    elif c[len(rvs)] not in kana_dist:
+                        # ターゲット側に未知ユニット → 全単語 Infinity。min に影響しない
+                        continue
+
+                if totals is None:
+                    # 素朴な経路: 長さ不一致・未知ユニットを含むDBや非対称な行列など
+                    ld = self._ld
+                    totals = [ld(c, p, kana_dist, cwts) for p in prons]
+
+                # ldの生スコアに変種コスト(ターゲット側 c.vcost + 単語側 w.vcost)を
+                # 加算した素の合計にする(#105)。旧正規化(÷変種長×音節数)は
+                # 対角0の新行列(#102/#104)では希釈の副作用だけが残るため廃止。
+                # 変種コストは位置を持たないので重み付けの対象外(将来の拡張)。
+                if variation_cost:
+                    cur = [
+                        t + (cvcost + v) * variation_cost
+                        for t, v in zip(totals, vcosts, strict=True)
+                    ]
+                else:
+                    # ``+ 0`` は値を変えないので足す前の合計をそのまま使う
+                    cur = totals
+
+                if sims is None:
+                    sims = cur
+                else:
+                    # min(d, sim) と同じく、同点なら先の候補を残す
+                    sims = [d if d < s else s for d, s in zip(cur, sims, strict=True)]
+
+            if sims is None:  # 全候補が未知ユニット持ち
+                sims = [INF] * n
+
+            for w, sim in zip(wordlist[key], sims, strict=True):
+                wid = w["id"]
+                prev = best_sim.get(wid)
+                if prev is not None and sim > prev:
+                    continue
+                best_sim[wid] = sim  # 同点は後勝ち(素朴版の上書き条件 sim <= prev と同じ)
+                best_word[wid] = w
+
+        # 共有オブジェクトを直接書き換えるとDPの再帰中に別セグメントの
+        # クエリがsimを上書きし、スコア計算が汚染される(#99)。コピーに載せる
+        order = index.id_order(bucket_keys, best_sim.keys())
+        words2 = [{**best_word[wid], "sim": best_sim[wid]} for wid in order]
+        words2.sort(key=_SIM_KEY)
         return words2
 
     def _convert(
@@ -375,6 +604,8 @@ class SoramimiMaker:
         param = self._assign_default_parameter(parameter)
 
         kana_dist = self.kana_similarity.get_kana_similarity(param)
+        # 単語DBの前処理は行・区間をまたいで使い回す(kana_dist はこの generate 中不変)
+        index = _WordlistIndex(wordlist, kana_dist)
         gsmemo: dict[str, list[Word]] = {}
 
         def make_gs(
@@ -393,8 +624,8 @@ class SoramimiMaker:
                     key = joined_target + "\x00" + ",".join(repr(w) for w in seg_weights)
                 if key in gsmemo:
                     return gsmemo[key]
-                result = self.get_similar_word(
-                    wordlist, target, kana_dist, 100, param["VARIATION_COST"], seg_weights
+                result = self._get_similar_word(
+                    index, target, kana_dist, param["VARIATION_COST"], seg_weights
                 )
                 gsmemo[key] = result
                 return result
