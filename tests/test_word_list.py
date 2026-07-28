@@ -37,11 +37,7 @@ def test_parse_tidy_trailing_comma_does_not_swallow_next_line(pieces: dict[str, 
     再現テスト。
     """
     wl = pieces["word_list"]
-    csv = (
-        "id,original,surface,pronunciation\n"
-        "1,ネコ,ネコ,ネコ,\n"
-        "2,イヌ,イヌ,イヌ"
-    )
+    csv = "id,original,surface,pronunciation\n1,ネコ,ネコ,ネコ,\n2,イヌ,イヌ,イヌ"
     db = wl.parse_tidy(csv, "")
     surfaces = {w["surface"] for bucket in db.values() for w in bucket}
     assert "ネコ" in surfaces
