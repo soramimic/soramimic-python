@@ -1,0 +1,1079 @@
+{
+ "parse": [
+  {
+   "input": "夢は今もめぐりて 忘れがたきふるさと",
+   "output": {
+    "plain": "夢は今もめぐりて 忘れがたきふるさと",
+    "annotations": []
+   }
+  },
+  {
+   "input": "",
+   "output": {
+    "plain": "",
+    "annotations": []
+   }
+  },
+  {
+   "input": "｜邪悪《ダークネス》を飼い慣らせ",
+   "output": {
+    "plain": "邪悪を飼い慣らせ",
+    "annotations": [
+     {
+      "start": 0,
+      "end": 2,
+      "reading": "ダークネス"
+     }
+    ]
+   }
+  },
+  {
+   "input": "|邪悪《ダークネス》を飼い慣らせ",
+   "output": {
+    "plain": "邪悪を飼い慣らせ",
+    "annotations": [
+     {
+      "start": 0,
+      "end": 2,
+      "reading": "ダークネス"
+     }
+    ]
+   }
+  },
+  {
+   "input": "｜本気《まじ》",
+   "output": {
+    "plain": "本気",
+    "annotations": [
+     {
+      "start": 0,
+      "end": 2,
+      "reading": "マジ"
+     }
+    ]
+   }
+  },
+  {
+   "input": "俺の｜心《ハート》",
+   "output": {
+    "plain": "俺の心",
+    "annotations": [
+     {
+      "start": 2,
+      "end": 3,
+      "reading": "ハート"
+     }
+    ]
+   }
+  },
+  {
+   "input": "｜本気《マジ》で｜書く《かく》ぜ",
+   "output": {
+    "plain": "本気で書くぜ",
+    "annotations": [
+     {
+      "start": 0,
+      "end": 2,
+      "reading": "マジ"
+     },
+     {
+      "start": 3,
+      "end": 5,
+      "reading": "カク"
+     }
+    ]
+   }
+  },
+  {
+   "input": "｜A《エー》｜B《ビー》",
+   "output": {
+    "plain": "AB",
+    "annotations": [
+     {
+      "start": 0,
+      "end": 1,
+      "reading": "エー"
+     },
+     {
+      "start": 1,
+      "end": 2,
+      "reading": "ビー"
+     }
+    ]
+   }
+  },
+  {
+   "input": "\\｜邪悪《ダークネス》",
+   "output": {
+    "plain": "｜邪悪《ダークネス》",
+    "annotations": []
+   }
+  },
+  {
+   "input": "\\|邪悪《ダークネス》",
+   "output": {
+    "plain": "|邪悪《ダークネス》",
+    "annotations": []
+   }
+  },
+  {
+   "input": "｜a\\｜b《ヨミ》",
+   "output": {
+    "plain": "a｜b",
+    "annotations": [
+     {
+      "start": 0,
+      "end": 3,
+      "reading": "ヨミ"
+     }
+    ]
+   }
+  },
+  {
+   "input": "｜表層《よ\\《み》",
+   "output": {
+    "plain": "表層",
+    "annotations": [
+     {
+      "start": 0,
+      "end": 2,
+      "reading": "ヨ《ミ"
+     }
+    ]
+   }
+  },
+  {
+   "input": "a\\\\b",
+   "output": {
+    "plain": "a\\b",
+    "annotations": []
+   }
+  },
+  {
+   "input": "a\\b",
+   "output": {
+    "plain": "a\\b",
+    "annotations": []
+   }
+  },
+  {
+   "input": "末尾は\\",
+   "output": {
+    "plain": "末尾は\\",
+    "annotations": []
+   }
+  },
+  {
+   "input": "｜ふつうの文字",
+   "output": {
+    "plain": "｜ふつうの文字",
+    "annotations": []
+   }
+  },
+  {
+   "input": "邪悪《ダークネス》",
+   "output": {
+    "plain": "邪悪《ダークネス》",
+    "annotations": []
+   }
+  },
+  {
+   "input": "《ダークネス》",
+   "output": {
+    "plain": "《ダークネス》",
+    "annotations": []
+   }
+  },
+  {
+   "input": "｜表層《》",
+   "output": {
+    "plain": "｜表層《》",
+    "annotations": []
+   }
+  },
+  {
+   "input": "｜《ヨミ》",
+   "output": {
+    "plain": "｜《ヨミ》",
+    "annotations": []
+   }
+  },
+  {
+   "input": "｜a｜b《ヨミ》",
+   "output": {
+    "plain": "｜ab",
+    "annotations": [
+     {
+      "start": 2,
+      "end": 3,
+      "reading": "ヨミ"
+     }
+    ]
+   }
+  },
+  {
+   "input": "｜邪悪\n《ダークネス》",
+   "output": {
+    "plain": "｜邪悪\n《ダークネス》",
+    "annotations": []
+   }
+  },
+  {
+   "input": "｜邪悪《ダーク\nネス》",
+   "output": {
+    "plain": "｜邪悪《ダーク\nネス》",
+    "annotations": []
+   }
+  },
+  {
+   "input": "｜邪悪《ダークネス",
+   "output": {
+    "plain": "｜邪悪《ダークネス",
+    "annotations": []
+   }
+  },
+  {
+   "input": "｜a《b《ヨミ》",
+   "output": {
+    "plain": "｜a《b《ヨミ》",
+    "annotations": []
+   }
+  },
+  {
+   "input": "𩸽｜邪悪《ダーク》",
+   "output": {
+    "plain": "𩸽邪悪",
+    "annotations": [
+     {
+      "start": 1,
+      "end": 3,
+      "reading": "ダーク"
+     }
+    ]
+   }
+  },
+  {
+   "input": "｜𩸽《ホッケ》を焼く",
+   "output": {
+    "plain": "𩸽を焼く",
+    "annotations": [
+     {
+      "start": 0,
+      "end": 1,
+      "reading": "ホッケ"
+     }
+    ]
+   }
+  }
+ ],
+ "tokenize": [
+  {
+   "input": [
+    "夢は今もめぐりて",
+    "ぴえんー"
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "夢",
+      "basic_form": "夢",
+      "reading": "*",
+      "pronunciation": "ユメ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "phrase": 0
+     },
+     {
+      "surface_form": "は",
+      "basic_form": "は",
+      "reading": "ハ",
+      "pronunciation": "ハ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 2,
+      "phrase": 1
+     },
+     {
+      "surface_form": "今",
+      "basic_form": "今",
+      "reading": "*",
+      "pronunciation": "イマ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 3,
+      "phrase": 2
+     },
+     {
+      "surface_form": "も",
+      "basic_form": "も",
+      "reading": "モ",
+      "pronunciation": "モ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 4,
+      "phrase": 3
+     },
+     {
+      "surface_form": "め",
+      "basic_form": "め",
+      "reading": "メ",
+      "pronunciation": "メ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 5,
+      "phrase": 4
+     },
+     {
+      "surface_form": "ぐ",
+      "basic_form": "ぐ",
+      "reading": "グ",
+      "pronunciation": "グ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 6,
+      "phrase": 5
+     },
+     {
+      "surface_form": "り",
+      "basic_form": "り",
+      "reading": "リ",
+      "pronunciation": "リ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 7,
+      "phrase": 6
+     },
+     {
+      "surface_form": "て",
+      "basic_form": "て",
+      "reading": "テ",
+      "pronunciation": "テ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 8,
+      "phrase": 7
+     }
+    ],
+    [
+     {
+      "surface_form": "ぴ",
+      "basic_form": "ぴ",
+      "reading": "ピ",
+      "pronunciation": "ピ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "phrase": 0
+     },
+     {
+      "surface_form": "え",
+      "basic_form": "え",
+      "reading": "エ",
+      "pronunciation": "エ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 2,
+      "phrase": 1
+     },
+     {
+      "surface_form": "んー",
+      "basic_form": "ん",
+      "reading": "ン",
+      "pronunciation": "ンー",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 3,
+      "phrase": 2
+     }
+    ]
+   ]
+  },
+  {
+   "input": [
+    "｜邪悪《ダークネス》を飼い慣らせ"
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "邪悪",
+      "basic_form": "邪悪",
+      "reading": "ダークネス",
+      "pronunciation": "ダークネス",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "ruby": true,
+      "phrase": 0
+     },
+     {
+      "surface_form": "を",
+      "basic_form": "を",
+      "reading": "ヲ",
+      "pronunciation": "ヲ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 3,
+      "phrase": 1
+     },
+     {
+      "surface_form": "飼",
+      "basic_form": "飼",
+      "reading": "*",
+      "pronunciation": "カ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 4,
+      "phrase": 2
+     },
+     {
+      "surface_form": "い",
+      "basic_form": "い",
+      "reading": "イ",
+      "pronunciation": "イ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 5,
+      "phrase": 3
+     },
+     {
+      "surface_form": "慣",
+      "basic_form": "慣",
+      "reading": "*",
+      "pronunciation": "カン",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 6,
+      "phrase": 4
+     },
+     {
+      "surface_form": "ら",
+      "basic_form": "ら",
+      "reading": "ラ",
+      "pronunciation": "ラ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 7,
+      "phrase": 5
+     },
+     {
+      "surface_form": "せ",
+      "basic_form": "せ",
+      "reading": "セ",
+      "pronunciation": "セ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 8,
+      "phrase": 6
+     }
+    ]
+   ]
+  },
+  {
+   "input": [
+    "俺の｜心《ハート》"
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "俺",
+      "basic_form": "俺",
+      "reading": "*",
+      "pronunciation": "オレ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "phrase": 0
+     },
+     {
+      "surface_form": "の",
+      "basic_form": "の",
+      "reading": "ノ",
+      "pronunciation": "ノ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 2,
+      "phrase": 1
+     },
+     {
+      "surface_form": "心",
+      "basic_form": "心",
+      "reading": "ハート",
+      "pronunciation": "ハート",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 3,
+      "ruby": true,
+      "phrase": 2
+     }
+    ]
+   ]
+  },
+  {
+   "input": [
+    "｜本気《マジ》で｜書く《かく》ぜ",
+    "普通の行",
+    ""
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "本気",
+      "basic_form": "本気",
+      "reading": "マジ",
+      "pronunciation": "マジ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "ruby": true,
+      "phrase": 0
+     },
+     {
+      "surface_form": "で",
+      "basic_form": "で",
+      "reading": "デ",
+      "pronunciation": "デ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 3,
+      "phrase": 1
+     },
+     {
+      "surface_form": "書く",
+      "basic_form": "書く",
+      "reading": "カク",
+      "pronunciation": "カク",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 4,
+      "ruby": true,
+      "phrase": 2
+     },
+     {
+      "surface_form": "ぜ",
+      "basic_form": "ぜ",
+      "reading": "ゼ",
+      "pronunciation": "ゼ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 6,
+      "phrase": 3
+     }
+    ],
+    [
+     {
+      "surface_form": "普",
+      "basic_form": "普",
+      "reading": "*",
+      "pronunciation": "フ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "phrase": 0
+     },
+     {
+      "surface_form": "通",
+      "basic_form": "通",
+      "reading": "*",
+      "pronunciation": "カヨ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 2,
+      "phrase": 1
+     },
+     {
+      "surface_form": "の",
+      "basic_form": "の",
+      "reading": "ノ",
+      "pronunciation": "ノ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 3,
+      "phrase": 2
+     },
+     {
+      "surface_form": "行",
+      "basic_form": "行",
+      "reading": "*",
+      "pronunciation": "オコナ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 4,
+      "phrase": 3
+     }
+    ],
+    []
+   ]
+  },
+  {
+   "input": [
+    "｜すもも《ピーチ》が好き"
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "すもも",
+      "basic_form": "すもも",
+      "reading": "ピーチ",
+      "pronunciation": "ピーチ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "ruby": true,
+      "phrase": 0
+     },
+     {
+      "surface_form": "が",
+      "basic_form": "が",
+      "reading": "ガ",
+      "pronunciation": "ガ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 4,
+      "phrase": 1
+     },
+     {
+      "surface_form": "好",
+      "basic_form": "好",
+      "reading": "*",
+      "pronunciation": "コノ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 5,
+      "phrase": 2
+     },
+     {
+      "surface_form": "き",
+      "basic_form": "き",
+      "reading": "キ",
+      "pronunciation": "キ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 6,
+      "phrase": 3
+     }
+    ]
+   ]
+  },
+  {
+   "input": [
+    "｜love《アイ》を叫ぶ"
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "love",
+      "basic_form": "love",
+      "reading": "アイ",
+      "pronunciation": "アイ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "ruby": true,
+      "phrase": 0
+     },
+     {
+      "surface_form": "を",
+      "basic_form": "を",
+      "reading": "ヲ",
+      "pronunciation": "ヲ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 5,
+      "phrase": 1
+     },
+     {
+      "surface_form": "叫",
+      "basic_form": "叫",
+      "reading": "*",
+      "pronunciation": "キョウ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 6,
+      "phrase": 2
+     },
+     {
+      "surface_form": "ぶ",
+      "basic_form": "ぶ",
+      "reading": "ブ",
+      "pronunciation": "ブ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 7,
+      "phrase": 3
+     }
+    ]
+   ]
+  },
+  {
+   "input": [
+    "｜1《ワン》の位"
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "1",
+      "basic_form": "1",
+      "reading": "ワン",
+      "pronunciation": "ワン",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "ruby": true,
+      "phrase": 0
+     },
+     {
+      "surface_form": "の",
+      "basic_form": "の",
+      "reading": "ノ",
+      "pronunciation": "ノ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 2,
+      "phrase": 1
+     },
+     {
+      "surface_form": "位",
+      "basic_form": "位",
+      "reading": "*",
+      "pronunciation": "クライ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 3,
+      "phrase": 2
+     }
+    ]
+   ]
+  },
+  {
+   "input": [
+    "｜あ《ハート》っ"
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "あ",
+      "basic_form": "あ",
+      "reading": "ハート",
+      "pronunciation": "ハート",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "ruby": true,
+      "phrase": 0
+     },
+     {
+      "surface_form": "っ",
+      "basic_form": "っ",
+      "reading": "ッ",
+      "pronunciation": "ッ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 2,
+      "phrase": 1
+     }
+    ]
+   ]
+  },
+  {
+   "input": [
+    "｜延《の》ーばす"
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "延",
+      "basic_form": "延",
+      "reading": "ノ",
+      "pronunciation": "ノ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "ruby": true,
+      "phrase": 0
+     },
+     {
+      "surface_form": "ば",
+      "basic_form": "ば",
+      "reading": "バ",
+      "pronunciation": "バ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 3,
+      "phrase": 1
+     },
+     {
+      "surface_form": "す",
+      "basic_form": "す",
+      "reading": "ス",
+      "pronunciation": "ス",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 4,
+      "phrase": 2
+     }
+    ]
+   ]
+  },
+  {
+   "input": [
+    "𩸽｜邪悪《ダーク》を食う"
+   ],
+   "output": [
+    [
+     {
+      "surface_form": "𩸽",
+      "basic_form": "𩸽",
+      "reading": "*",
+      "pronunciation": "*",
+      "pos": "記号",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 1,
+      "phrase": 0
+     },
+     {
+      "surface_form": "邪悪",
+      "basic_form": "邪悪",
+      "reading": "ダーク",
+      "pronunciation": "ダーク",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 2,
+      "ruby": true,
+      "phrase": 1
+     },
+     {
+      "surface_form": "を",
+      "basic_form": "を",
+      "reading": "ヲ",
+      "pronunciation": "ヲ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 4,
+      "phrase": 2
+     },
+     {
+      "surface_form": "食",
+      "basic_form": "食",
+      "reading": "*",
+      "pronunciation": "ショク",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 5,
+      "phrase": 3
+     },
+     {
+      "surface_form": "う",
+      "basic_form": "う",
+      "reading": "ウ",
+      "pronunciation": "ウ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 6,
+      "phrase": 4
+     }
+    ]
+   ]
+  }
+ ]
+}

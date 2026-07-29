@@ -10,12 +10,13 @@ from __future__ import annotations
 import copy
 import json
 import math
+import re
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from soramimic import create_soramimic, load_default_data
+from soramimic import create_soramimic, load_default_data, parse_ruby
 
 GOLDEN_DIR = Path(__file__).parent / "golden"
 
@@ -164,6 +165,62 @@ def test_generate_from_tokens_monotie():
             case["parameter"],
         )
         assert normalize(results) == case["results"], case["name"]
+
+
+def _fake_char_tokenize(texts: list[str]) -> list[list[dict[str, Any]]]:
+    """generate_golden.mjs の fakeCharTokenize と同じ「1文字=1トークン」トークナイザ。
+
+    kuromoji/MeCab の辞書差に依存せずルビ適用(注釈区間の強制トークン化と結合)を
+    検証するために使う(漢字の読みは共通の kanjiyomi.json 経由で補完される)。
+    """
+    tokens_list = []
+    for text in texts:
+        tokens = []
+        for i, ch in enumerate(text):
+            pron = _hira_to_kata_char(ch) if re.fullmatch(r"[ぁ-ゔァ-ヴー]", ch) else "*"
+            tokens.append(
+                {
+                    "surface_form": ch,
+                    "basic_form": ch,
+                    "reading": pron,
+                    "pronunciation": pron,
+                    "pos": "名詞",
+                    "pos_detail_1": "一般",
+                    "pos_detail_2": "*",
+                    "pos_detail_3": "*",
+                    "conjugated_form": "*",
+                    "conjugated_type": "*",
+                    "word_position": i + 1,
+                }
+            )
+        tokens_list.append(tokens)
+    return tokens_list
+
+
+def _hira_to_kata_char(ch: str) -> str:
+    return chr(ord(ch) + 0x60) if re.fullmatch(r"[ぁ-ゖ]", ch) else ch
+
+
+def test_ruby():
+    """ルビ記法: パーサ単体と、トークナイズ入口でのルビ適用。"""
+    fixture = load("ruby.json")
+    for case in fixture["parse"]:
+        assert normalize(parse_ruby(case["input"])) == case["output"], case["input"]
+
+    data = load_default_data()
+    ruby_app = create_soramimic(
+        kanji_dict=data["kanji_dict"],
+        english_dict=data["english_dict"],
+        roman_tree=data["roman_tree"],
+        vowel_similarity=data["vowel_similarity"],
+        consonant_similarity=data["consonant_similarity"],
+        kana2phonon=data["kana2phonon"],
+        tokenize_sentenses=_fake_char_tokenize,
+        get_yomi=fake_get_yomi,
+    )
+    for case in fixture["tokenize"]:
+        output = ruby_app.text_analyzer.tokenize_together(list(case["input"]))
+        assert normalize(output) == case["output"], case["input"]
 
 
 def test_get_candidates(app):

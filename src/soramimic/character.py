@@ -56,6 +56,15 @@ class TokenFormatter:
         return tokens
 
     @staticmethod
+    def _is_ruby(token: Token) -> bool:
+        """ルビ記法(｜表層《よみ》)で読みを明示指定したトークンか。
+
+        読みは確定済みなので、推定系の上書きやトークン結合の対象から外す
+        (記法を使わない従来の入力にはこのフラグが付かないため、挙動は変わらない)。
+        """
+        return bool(token and token.get("ruby"))
+
+    @staticmethod
     def _is_small_kana_start(char: str) -> bool:
         return re.match(r"^[ぁぃぅぇぉゃゅょゎっァィゥェォヮャュョッ]", char) is not None
 
@@ -70,6 +79,8 @@ class TokenFormatter:
     @classmethod
     def _concat_small_kana(cls, tokens: list[Token]) -> list[Token]:
         for i in range(1, len(tokens)):
+            if cls._is_ruby(tokens[i]) or cls._is_ruby(tokens[i - 1]):
+                continue
             if cls._is_small_kana_start(tokens[i]["surface_form"]) and cls._is_kana_end(
                 tokens[i - 1]["surface_form"]
             ):
@@ -81,22 +92,26 @@ class TokenFormatter:
     @classmethod
     def _set_kana_pronunciation(cls, tokens: list[Token]) -> list[Token]:
         for token in tokens:
+            if cls._is_ruby(token):
+                continue
             if cls._is_kana(token["surface_form"]):
                 token["pronunciation"] = _hira_to_kata(token["surface_form"])
                 if token["pos"] == "記号":
                     token["pos"] = "名詞"
         return tokens
 
-    @staticmethod
-    def _concat_single_bar(tokens: list[Token]) -> list[Token]:
+    @classmethod
+    def _concat_single_bar(cls, tokens: list[Token]) -> list[Token]:
         for i in range(1, len(tokens)):
+            if cls._is_ruby(tokens[i]) or cls._is_ruby(tokens[i - 1]):
+                continue
             if tokens[i]["surface_form"] == "ー":
                 tokens[i - 1]["surface_form"] += "ー"
                 tokens[i - 1]["pronunciation"] += "ー"
-        return [token for token in tokens if token["surface_form"] != "ー"]
+        return [token for token in tokens if cls._is_ruby(token) or token["surface_form"] != "ー"]
 
-    @staticmethod
-    def _set_number_pronunciation(tokens: list[Token]) -> list[Token]:
+    @classmethod
+    def _set_number_pronunciation(cls, tokens: list[Token]) -> list[Token]:
         n2p = {
             "1": "イチ",
             "2": "ニ",
@@ -110,6 +125,8 @@ class TokenFormatter:
             "0": "ゼロ",
         }
         for token in tokens:
+            if cls._is_ruby(token):
+                continue
             if re.match(r"^[0-9]$", token["surface_form"]):
                 p = ""
                 for v in token["surface_form"]:

@@ -18,12 +18,37 @@ from .kana_to_syllable import (
     hira_to_kata,
     remove_unnatural_kana_pattern,
 )
+from .ruby import parse_ruby
 from .utils import remove_sign
 
 Token = dict[str, Any]
 
 # JS: /^[\u{3000}-\u{301C}\u{30A1}-\u{30F6}\u{30FB}-\u{30FE}]+$/u
 _KATAKANA_ONLY_RE = re.compile("^[　-〜ァ-ヶ・-ヾ]+$")
+
+
+def _make_ruby_token(surface: str, reading: str) -> Token:
+    """ルビ記法(｜表層《よみ》)の注釈区間に割り当てる強制トークン。
+
+    kuromoji(ipadic)形式に合わせた既定値を持ち、pos は名詞にして
+    TokenFormatter の文節ヒューリスティックで文節カウントが進むようにする。
+    ruby=True は「読みが確定済み」の目印で、以降の推定・結合処理が読みを
+    上書き/破壊しないためのガードに使う。
+    """
+    return {
+        "surface_form": surface,
+        "basic_form": surface,
+        "reading": reading,
+        "pronunciation": reading,
+        "pos": "名詞",
+        "pos_detail_1": "一般",
+        "pos_detail_2": "*",
+        "pos_detail_3": "*",
+        "conjugated_form": "*",
+        "conjugated_type": "*",
+        "word_position": 1,
+        "ruby": True,
+    }
 
 
 class TextAnalyzer:
@@ -48,8 +73,84 @@ class TextAnalyzer:
     def tokenize_together(self, texts: list[str]) -> list[list[Token]]:
         ap = self.english.apostrophe
         texts = [ap.to_string(v) for v in texts]
-        tokens_list = self.tokenize_sentenses(texts)
+        chunks, plan = self.split_by_ruby(texts)
+        tokens_list = self.merge_ruby_tokens(self.tokenize_sentenses(chunks), plan)
         return self.format_tokens_list(tokens_list)
+
+    @staticmethod
+    def split_by_ruby(texts: list[str]) -> tuple[list[str], list[list[dict[str, Any]]]]:
+        """ルビ記法の前処理: 記法を解決した素テキストを注釈境界で分割する。
+
+        トークナイザに渡すチャンク列(chunks)と、結合手順(plan)を返す。
+        記法を含まない行は行全体が1チャンクになるので、従来と完全に同じ入力が
+        トークナイザに渡る(=出力も従来と一致する)。
+        kuromoji経路(tokenize_together)と読み推定API経路の両方から使えるよう、
+        「分割」と「結合」を分けて公開している。
+        """
+        chunks: list[str] = []
+        plan: list[list[dict[str, Any]]] = []
+        for text in texts:
+            parsed = parse_ruby(text)
+            plain = parsed["plain"]
+            annotations = parsed["annotations"]
+            if not annotations:
+                plan.append([{"type": "chunk", "index": len(chunks)}])
+                chunks.append(plain)
+                continue
+            # 注釈境界で分割する(空チャンクはトークナイザに渡さない)
+            items: list[dict[str, Any]] = []
+            pos = 0
+            for ann in annotations:
+                if plain[pos : ann["start"]] != "":
+                    items.append({"type": "chunk", "index": len(chunks)})
+                    chunks.append(plain[pos : ann["start"]])
+                items.append(
+                    {
+                        "type": "ruby",
+                        "surface": plain[ann["start"] : ann["end"]],
+                        "reading": ann["reading"],
+                    }
+                )
+                pos = ann["end"]
+            if plain[pos:] != "":
+                items.append({"type": "chunk", "index": len(chunks)})
+                chunks.append(plain[pos:])
+            plan.append(items)
+        return chunks, plan
+
+    @staticmethod
+    def merge_ruby_tokens(
+        chunk_tokens_list: list[list[Token]], plan: list[list[dict[str, Any]]]
+    ) -> list[list[Token]]:
+        """split_by_ruby のチャンクをトークナイズした結果を行ごとに組み直す。
+
+        注釈区間は強制トークン1個に置き換わる。
+        word_position はチャンク単位でしか正しくないため、記法を含む行だけ再計算する
+        (記法を含まない行はトークナイザの出力をそのまま保つ = 後方互換)。
+        """
+        tokens_list: list[list[Token]] = []
+        for items in plan:
+            tokens: list[Token] = []
+            has_ruby = False
+            for item in items:
+                if item["type"] == "ruby":
+                    has_ruby = True
+                    tokens.append(_make_ruby_token(item["surface"], item["reading"]))
+                else:
+                    chunk = (
+                        chunk_tokens_list[item["index"]]
+                        if item["index"] < len(chunk_tokens_list)
+                        else None
+                    )
+                    if chunk:
+                        tokens.extend(chunk)
+            if has_ruby:
+                pos = 1
+                for token in tokens:
+                    token["word_position"] = pos
+                    pos += len(token.get("surface_form") or "")
+            tokens_list.append(tokens)
+        return tokens_list
 
     def format_tokens_list(self, tokens_list: list[list[Token]]) -> list[list[Token]]:
         ap = self.english.apostrophe
@@ -57,8 +158,10 @@ class TextAnalyzer:
             for token in tokens:
                 if self.english.is_fullmatch(token["surface_form"]):
                     token["surface_form"] = ap.to_sign(token["surface_form"])
-                    # JS原典は if(pronunciation==="*") がコメントアウトされ常に代入
-                    token["pronunciation"] = self.english.to_kana(token["surface_form"])
+                    # ルビ記法で読みを明示指定したトークンは英語読みで上書きしない
+                    if not token.get("ruby"):
+                        # JS原典は if(pronunciation==="*") がコメントアウトされ常に代入
+                        token["pronunciation"] = self.english.to_kana(token["surface_form"])
 
             for token in tokens:
                 if token["pronunciation"] == "*" and self.kanji.is_fullmatch(token["surface_form"]):

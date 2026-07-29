@@ -16,7 +16,7 @@ if (!ROOT || !OUTDIR) {
 mkdirSync(OUTDIR, { recursive: true });
 
 const libUrl = (f) => pathToFileURL(join(ROOT, "frontend/src/lib", f)).href;
-const { createSoramimic } = await import(libUrl("index.js"));
+const { createSoramimic, parseRuby } = await import(libUrl("index.js"));
 
 const loadJson = (f) => JSON.parse(readFileSync(join(ROOT, "data", f), "utf8"));
 const kanjiDict = loadJson("kanjiyomi.json");
@@ -343,6 +343,112 @@ const candFixture = candTargets.map((target) => ({
 writeFileSync(
   join(OUTDIR, "get_candidates.json"),
   JSON.stringify({ wordlist_csv: genWordlistCsv, cases: candFixture }, null, 1)
+);
+
+// ---------------------------------------------------------------
+// 8. ルビ記法(｜表層《よみ》)
+// パーサ単体(parseRuby)と、トークナイズ入口(tokenizeTogether)でのルビ適用。
+// 後者は「1文字=1トークン」の決定的なfakeトークナイザを注入し、
+// kuromoji/MeCabの辞書差に依存しない形で検証する
+// (漢字の読みは共通の kanjiyomi.json 経由で補完されるので実装間で一致する)
+const KANA_CHAR_RE = /^[ぁ-ゔァ-ヴー]$/;
+const hiraToKataChar = (ch) =>
+  /^[ぁ-ゖ]$/.test(ch) ? String.fromCharCode(ch.charCodeAt(0) + 0x60) : ch;
+const fakeCharTokenize = (texts) =>
+  texts.map((text) =>
+    Array.from(text).map((ch, i) => {
+      const pron = KANA_CHAR_RE.test(ch) ? hiraToKataChar(ch) : "*";
+      return {
+        surface_form: ch,
+        basic_form: ch,
+        reading: pron,
+        pronunciation: pron,
+        pos: "名詞",
+        pos_detail_1: "一般",
+        pos_detail_2: "*",
+        pos_detail_3: "*",
+        conjugated_form: "*",
+        conjugated_type: "*",
+        word_position: i + 1,
+      };
+    })
+  );
+
+const rubyParseInputs = [
+  // 記法なし(素通し)
+  "夢は今もめぐりて 忘れがたきふるさと",
+  "",
+  // 基本形(全角/半角バー、ひらがな読みのカタカナ正規化)
+  "｜邪悪《ダークネス》を飼い慣らせ",
+  "|邪悪《ダークネス》を飼い慣らせ",
+  "｜本気《まじ》",
+  "俺の｜心《ハート》",
+  // 複数ルビ・隣接ルビ
+  "｜本気《マジ》で｜書く《かく》ぜ",
+  "｜A《エー》｜B《ビー》",
+  // エスケープ
+  "\\｜邪悪《ダークネス》",
+  "\\|邪悪《ダークネス》",
+  "｜a\\｜b《ヨミ》",
+  "｜表層《よ\\《み》",
+  "a\\\\b",
+  "a\\b",
+  "末尾は\\",
+  // 寛容規則
+  "｜ふつうの文字",
+  "邪悪《ダークネス》",
+  "《ダークネス》",
+  "｜表層《》",
+  "｜《ヨミ》",
+  "｜a｜b《ヨミ》",
+  "｜邪悪\n《ダークネス》",
+  "｜邪悪《ダーク\nネス》",
+  "｜邪悪《ダークネス",
+  "｜a《b《ヨミ》",
+  // コードポイント単位のオフセット(サロゲートペア)
+  "𩸽｜邪悪《ダーク》",
+  "｜𩸽《ホッケ》を焼く",
+];
+const rubyTokenizeInputs = [
+  // 記法なし(後方互換: fakeトークナイザの出力がそのまま後処理に流れる)
+  ["夢は今もめぐりて", "ぴえんー"],
+  // 基本形・行頭/行中/行末
+  ["｜邪悪《ダークネス》を飼い慣らせ"],
+  ["俺の｜心《ハート》"],
+  // 複数ルビ・記法あり/なしの行が混在
+  ["｜本気《マジ》で｜書く《かく》ぜ", "普通の行", ""],
+  // 後段の推定(かな・英字・数字・小書き・長音)に読みを上書きされないこと
+  ["｜すもも《ピーチ》が好き"],
+  ["｜love《アイ》を叫ぶ"],
+  ["｜1《ワン》の位"],
+  ["｜あ《ハート》っ"],
+  ["｜延《の》ーばす"],
+  // サロゲートペア(word_positionの再計算がコードポイント単位であること)
+  ["𩸽｜邪悪《ダーク》を食う"],
+];
+const rubyApp = createSoramimic({
+  kanjiDict,
+  englishDict,
+  romanTree,
+  vowelSimilarity,
+  consonantSimilarity,
+  kana2phonon,
+  tokenizeSentenses: fakeCharTokenize,
+  getYomi: fakeGetYomi,
+});
+writeFileSync(
+  join(OUTDIR, "ruby.json"),
+  JSON.stringify(
+    {
+      parse: rubyParseInputs.map((input) => ({ input, output: parseRuby(input) })),
+      tokenize: rubyTokenizeInputs.map((input) => ({
+        input,
+        output: rubyApp.textAnalyzer.tokenizeTogether(input),
+      })),
+    },
+    null,
+    1
+  )
 );
 
 console.log = origLog;
