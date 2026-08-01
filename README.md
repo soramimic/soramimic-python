@@ -44,6 +44,23 @@ for line in results:
 kuromoji.js 互換のトークン dict( `surface_form` / `pronunciation` / `pos` …、未知語は `"*"` )を返せば何でも使えます。
 事前にトークナイズ済みの入力からは `generate_from_tokens()` で生成できます(固定区間 `locks` による部分再生成にも対応)。
 
+### 変換しきれない部分(filler)
+
+単語リストが足りない( `DUPLICATE: False` で使い切った)・どの単語も合わない区間があると、
+その区間は**元歌詞のかながそのまま1ユニットずつ残ります**(#128)。この仮想語を filler と呼び、
+結果の単語 dict は `filler: True` を持ち、 `id` を持ちません( `surface` / `pronunciation` /
+`kana` / `originalkana` はいずれも元のかな、 `original` は空文字)。
+「候補が無いので行が丸ごと空になる」ことはありません。
+
+```python
+for line in results:
+    print(" / ".join(("[" + w["surface"] + "]") if w.get("filler") else w["surface"] for w in line))
+```
+
+filler は使用済み(単語重複なし)の判定に入らないので何度でも現れます。コストは
+`soramimic.maker.FILLER_COST` (1e6)で、実単語が1つでも置ける区間では必ず負けます
+(=**単語が足りている場合の結果は従来と完全に同一**)。
+
 ### soramimic.com 現行版と同じ設定で生成する
 
 本体フロントエンドは monophone タイブレーク行列(#102)と新パラメータ
