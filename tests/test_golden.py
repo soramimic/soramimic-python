@@ -17,6 +17,7 @@ from typing import Any
 import pytest
 
 from soramimic import create_soramimic, load_default_data, parse_ruby
+from soramimic.maker import FILLER_COST
 
 GOLDEN_DIR = Path(__file__).parent / "golden"
 
@@ -221,6 +222,22 @@ def test_ruby():
     for case in fixture["tokenize"]:
         output = ruby_app.text_analyzer.tokenize_together(list(case["input"]))
         assert normalize(output) == case["output"], case["input"]
+
+
+def test_filler(app):
+    """filler(万能候補) #128: 単語が足りない/合わない区間の出力がJSと一致すること。"""
+    fixture = load("filler.json")
+    assert FILLER_COST == fixture["filler_cost"]
+    for case in fixture["cases"]:
+        db = app.word_list.parse_tidy(case["wordlist_csv"], "")
+        results = app.soramimi_maker.generate_from_tokens(
+            copy.deepcopy(case["tokens_list"]),
+            db,
+            case["parameter"],
+            locks_per_line=copy.deepcopy(case["locks_per_line"]),
+            weights_per_line=case["weights_per_line"],
+        )
+        assert normalize(results) == case["results"], case["name"]
 
 
 def test_get_candidates(app):
