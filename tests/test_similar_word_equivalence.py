@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 
+from soramimic.kana_to_syllable import Variation
 from soramimic.maker import SoramimiMaker
 from soramimic.utils import js_object_key_order
 
@@ -29,7 +30,7 @@ def naive_get_similar_word(
 ) -> list[dict[str, Any]]:
     """移植元 soramimic.js の getSimilarWord をそのまま写した参照実装。"""
     tmp = maker.text_analyzer.syllable_to_variation(target)
-    candidates: dict[int, list[list[str]]] = {}
+    candidates: dict[int, list[Variation]] = {}
     candidate_weights: dict[int, list[list[float] | None]] = {}
     for c in tmp:
         clen = len(c)

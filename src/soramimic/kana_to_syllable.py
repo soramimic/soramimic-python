@@ -16,7 +16,7 @@ def _match_all(pattern: re.Pattern[str], text: str) -> list[str] | None:
     return matches if matches else None
 
 
-class Variation(list):
+class Variation(list[str]):
     """ユニット列(list[str])に変種コスト vcost を持たせたリスト(#105)。
 
     JSでは配列に ``.vcost`` プロパティを直接生やしている。list のサブクラスなので
@@ -536,7 +536,7 @@ class KanaToSyllable:
 
     def get_variation(
         self, syllables: list[str] | None, max_units: int | None = None
-    ) -> list[list[str]]:
+    ) -> list[Variation]:
         """カナ発音のバリエーションを取得する(getVariation)。
 
         各変種に変換操作回数(コスト)を付与する(#105)。ン→ー化・ッ削除・
@@ -590,7 +590,7 @@ class KanaToSyllable:
         # 葉でだけコピーする。utils.product のように全組み合わせを一度に持たないので、
         # 使うメモリは出力ぶんだけで済む。最後の音節を最も速く回すため並び順も product と同じ。
         # 読みが長いと再帰では深さ制限に当たるので明示スタックで回す。
-        out: list[list[str]] = []
+        out: list[Variation] = []
         units_buf: list[str] = []
         src_buf: list[int] = []
         cursor = [0] * n  # cursor[i] = レベルiで次に試す断片のindex
@@ -721,7 +721,7 @@ class KanaConverter:
 
     def get_pronunciation_variation(
         self, syllables: list[str] | None, max_units: int | None = None
-    ) -> list[list[str]]:
+    ) -> list[Variation]:
         return self._k2s.get_variation(syllables, max_units)
 
     is_same_kana = staticmethod(is_same_kana)

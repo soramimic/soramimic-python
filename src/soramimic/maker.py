@@ -15,6 +15,7 @@ from operator import itemgetter
 from typing import Any
 
 from .kana_similarity import KanaSimilarity, SimTable
+from .kana_to_syllable import Variation
 from .text_analyzer import TextAnalyzer
 from .utils import find_min, js_object_key_order
 
@@ -351,7 +352,7 @@ class SoramimiMaker:
         """
         wordlist = index.wordlist
         tmp = self.text_analyzer.syllable_to_variation(target)
-        candidates: dict[int, list[list[str]]] = {}
+        candidates: dict[int, list[Variation]] = {}
         # 変種ごとの展開済み重み(単語ループの内側で毎回引き直さないよう先に作る)
         candidate_weights: dict[int, list[list[float] | None]] = {}
         for c in tmp:
@@ -454,7 +455,7 @@ class SoramimiMaker:
         used_words: list[str],
         param: dict[str, Any],
         locks: list[Word] | None = None,
-    ) -> list[Any]:
+    ) -> list[Any] | None:
         # get_similar_word_func は (部分ターゲット, 開始index, 終了index) を受け取る。
         # 位置別重みを引くために区間を渡す必要があるため、JS原典の1引数から拡張した。
         is_duplicate = param["DUPLICATE"]
@@ -478,10 +479,12 @@ class SoramimiMaker:
             elif v["phrase"] != tokens[j - 1]["phrase"]:
                 phrase_breaks.append(j)
 
-        memo: dict[tuple[int, int], list[Any]] = {}
+        # find_min は全候補が INF のとき None を返す(JSの getMin が null を返すのと
+        # 同じ)。呼び出し側はいずれも falsy 判定で弾いているので None のまま持つ
+        memo: dict[tuple[int, int], list[Any] | None] = {}
         memo[(0, 0)] = [0, []]
 
-        def dp(s: int, t: int) -> list[Any]:
+        def dp(s: int, t: int) -> list[Any] | None:
             if (s, t) in memo:
                 return memo[(s, t)]
             if s == t:
@@ -560,6 +563,7 @@ class SoramimiMaker:
                 new_words.append(new_word)
                 results.append([new_score, new_words])
 
+            result: list[Any] | None
             if len(results) == 0:
                 result = [INF, []]
                 memo[(s, t)] = result

@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from typing import Any
 
 import pytest
@@ -92,7 +93,7 @@ def _reference_get_variation(syllables: list[str] | None) -> list[list[str]]:
     return out
 
 
-def _dump(variations: list[list[str]]) -> list[tuple[list[str], int, list[int]]]:
+def _dump(variations: Sequence[list[str]]) -> list[tuple[list[str], int, list[int]]]:
     """比較しやすいよう (ユニット列, vcost, src) のタプル列にする。"""
     return [(list(v), getattr(v, "vcost", 0), list(getattr(v, "src", []))) for v in variations]
 
@@ -161,7 +162,7 @@ def test_matches_reference_implementation(corpus: list[str]) -> None:
 def test_none_syllables_are_skipped_like_reference() -> None:
     """None 混じり(split が None を返した行)の扱いも参照実装と同じ。"""
     k2s = KanaToSyllable()
-    syllables = ["カン", None, "コ"]  # type: ignore[list-item]
+    syllables: list[str] = ["カン", None, "コ"]  # type: ignore[list-item]
     assert _dump(k2s.get_variation(syllables)) == _dump(_reference_get_variation(syllables))
     assert k2s.get_variation([]) == []
     assert k2s.get_variation(None) == []
