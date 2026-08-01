@@ -1,0 +1,645 @@
+{
+ "filler_cost": 1000000,
+ "cases": [
+  {
+   "name": "shortage",
+   "wordlist_csv": "id,original,surface,pronunciation\n1,カキ,カキ,カキ\n2,キカ,キカ,キカ",
+   "tokens_list": [
+    [
+     {
+      "surface_form": "カキ",
+      "basic_form": "カキ",
+      "reading": "カキ",
+      "pronunciation": "カキ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ],
+    [
+     {
+      "surface_form": "カキ",
+      "basic_form": "カキ",
+      "reading": "カキ",
+      "pronunciation": "カキ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ],
+    [
+     {
+      "surface_form": "カキ",
+      "basic_form": "カキ",
+      "reading": "カキ",
+      "pronunciation": "カキ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ]
+   ],
+   "parameter": {
+    "SAME_PHRASE_BREAK_REWARD": 0,
+    "MID_PHRASE_BREAK_PENALTY": 20,
+    "WORD_NUMBER_PENALTY": 20,
+    "VARIATION_COST": 16,
+    "DUPLICATE": false
+   },
+   "locks_per_line": null,
+   "weights_per_line": null,
+   "results": [
+    [
+     {
+      "surface": "カキ",
+      "pronunciation": [
+       "カ",
+       "キ"
+      ],
+      "kana": "カキ",
+      "id": "1",
+      "original": "カキ",
+      "vcost": 0,
+      "sim": 117.916527,
+      "originalkana": "カキ",
+      "score": 117.916527,
+      "period": [
+       0,
+       2
+      ],
+      "original_surface": "カキ"
+     }
+    ],
+    [
+     {
+      "surface": "キカ",
+      "pronunciation": [
+       "キ",
+       "カ"
+      ],
+      "kana": "キカ",
+      "id": "2",
+      "original": "キカ",
+      "vcost": 0,
+      "sim": 152.8665195,
+      "originalkana": "カキ",
+      "score": 152.8665195,
+      "period": [
+       0,
+       2
+      ],
+      "original_surface": "カキ"
+     }
+    ],
+    [
+     {
+      "surface": "カ",
+      "pronunciation": "カ",
+      "kana": "カ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "カ",
+      "period": [
+       0,
+       1
+      ],
+      "original_surface": "カ"
+     },
+     {
+      "surface": "キ",
+      "pronunciation": "キ",
+      "kana": "キ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "キ",
+      "period": [
+       1,
+       2
+      ],
+      "original_surface": "キ"
+     }
+    ]
+   ]
+  },
+  {
+   "name": "mixed",
+   "wordlist_csv": "id,original,surface,pronunciation\n1,カキ,カキ,カキ",
+   "tokens_list": [
+    [
+     {
+      "surface_form": "カキクケ",
+      "basic_form": "カキクケ",
+      "reading": "カキクケ",
+      "pronunciation": "カキクケ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ]
+   ],
+   "parameter": {
+    "SAME_PHRASE_BREAK_REWARD": 0,
+    "MID_PHRASE_BREAK_PENALTY": 20,
+    "WORD_NUMBER_PENALTY": 20,
+    "VARIATION_COST": 16,
+    "DUPLICATE": false
+   },
+   "locks_per_line": null,
+   "weights_per_line": null,
+   "results": [
+    [
+     {
+      "surface": "カキ",
+      "pronunciation": [
+       "カ",
+       "キ"
+      ],
+      "kana": "カキ",
+      "id": "1",
+      "original": "カキ",
+      "vcost": 0,
+      "sim": 117.916527,
+      "originalkana": "カキ",
+      "score": 137.916527,
+      "period": [
+       0,
+       2
+      ],
+      "original_surface": "カキ"
+     },
+     {
+      "surface": "ク",
+      "pronunciation": "ク",
+      "kana": "ク",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "ク",
+      "period": [
+       2,
+       3
+      ],
+      "original_surface": "ク"
+     },
+     {
+      "surface": "ケ",
+      "pronunciation": "ケ",
+      "kana": "ケ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "ケ",
+      "period": [
+       3,
+       4
+      ],
+      "original_surface": "ケ"
+     }
+    ]
+   ]
+  },
+  {
+   "name": "no_match",
+   "wordlist_csv": "id,original,surface,pronunciation\n1,クケコ,クケコ,クケコ",
+   "tokens_list": [
+    [
+     {
+      "surface_form": "カキ",
+      "basic_form": "カキ",
+      "reading": "カキ",
+      "pronunciation": "カキ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ],
+    [
+     {
+      "surface_form": "カキ",
+      "basic_form": "カキ",
+      "reading": "カキ",
+      "pronunciation": "カキ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ],
+    [
+     {
+      "surface_form": "カカ",
+      "basic_form": "カカ",
+      "reading": "カカ",
+      "pronunciation": "カカ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ]
+   ],
+   "parameter": {
+    "SAME_PHRASE_BREAK_REWARD": 0,
+    "MID_PHRASE_BREAK_PENALTY": 20,
+    "WORD_NUMBER_PENALTY": 20,
+    "VARIATION_COST": 16,
+    "DUPLICATE": false
+   },
+   "locks_per_line": null,
+   "weights_per_line": null,
+   "results": [
+    [
+     {
+      "surface": "カ",
+      "pronunciation": "カ",
+      "kana": "カ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "カ",
+      "period": [
+       0,
+       1
+      ],
+      "original_surface": "カ"
+     },
+     {
+      "surface": "キ",
+      "pronunciation": "キ",
+      "kana": "キ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "キ",
+      "period": [
+       1,
+       2
+      ],
+      "original_surface": "キ"
+     }
+    ],
+    [
+     {
+      "surface": "カ",
+      "pronunciation": "カ",
+      "kana": "カ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "カ",
+      "period": [
+       0,
+       1
+      ],
+      "original_surface": "カ"
+     },
+     {
+      "surface": "キ",
+      "pronunciation": "キ",
+      "kana": "キ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "キ",
+      "period": [
+       1,
+       2
+      ],
+      "original_surface": "キ"
+     }
+    ],
+    [
+     {
+      "surface": "カ",
+      "pronunciation": "カ",
+      "kana": "カ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "カ",
+      "period": [
+       0,
+       1
+      ],
+      "original_surface": "カ"
+     },
+     {
+      "surface": "カ",
+      "pronunciation": "カ",
+      "kana": "カ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "カ",
+      "period": [
+       1,
+       2
+      ],
+      "original_surface": "カ"
+     }
+    ]
+   ]
+  },
+  {
+   "name": "weighted",
+   "wordlist_csv": "id,original,surface,pronunciation\n1,カキ,カキ,カキ",
+   "tokens_list": [
+    [
+     {
+      "surface_form": "カキクケ",
+      "basic_form": "カキクケ",
+      "reading": "カキクケ",
+      "pronunciation": "カキクケ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ]
+   ],
+   "parameter": {
+    "SAME_PHRASE_BREAK_REWARD": 0,
+    "MID_PHRASE_BREAK_PENALTY": 160,
+    "WORD_NUMBER_PENALTY": 60,
+    "VARIATION_COST": 16,
+    "DUPLICATE": false
+   },
+   "locks_per_line": null,
+   "weights_per_line": [
+    [
+     4,
+     0,
+     0,
+     0
+    ]
+   ],
+   "results": [
+    [
+     {
+      "surface": "カ",
+      "pronunciation": "カ",
+      "kana": "カ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "カ",
+      "period": [
+       0,
+       1
+      ],
+      "original_surface": "カ"
+     },
+     {
+      "surface": "カキ",
+      "pronunciation": [
+       "カ",
+       "キ"
+      ],
+      "kana": "カキ",
+      "id": "1",
+      "original": "カキ",
+      "vcost": 0,
+      "sim": 0,
+      "originalkana": "キク",
+      "score": 160,
+      "period": [
+       1,
+       3
+      ],
+      "original_surface": "キク"
+     },
+     {
+      "surface": "ケ",
+      "pronunciation": "ケ",
+      "kana": "ケ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "ケ",
+      "period": [
+       3,
+       4
+      ],
+      "original_surface": "ケ"
+     }
+    ]
+   ]
+  },
+  {
+   "name": "locks",
+   "wordlist_csv": "id,original,surface,pronunciation\n1,カキ,カキ,カキ",
+   "tokens_list": [
+    [
+     {
+      "surface_form": "カキクケ",
+      "basic_form": "カキクケ",
+      "reading": "カキクケ",
+      "pronunciation": "カキクケ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ]
+   ],
+   "parameter": {
+    "SAME_PHRASE_BREAK_REWARD": 0,
+    "MID_PHRASE_BREAK_PENALTY": 20,
+    "WORD_NUMBER_PENALTY": 20,
+    "VARIATION_COST": 16,
+    "DUPLICATE": false
+   },
+   "locks_per_line": [
+    [
+     {
+      "id": "lock-1",
+      "surface": "ソラミミ",
+      "pronunciation": "ソラ",
+      "kana": "ソラ",
+      "original": "ソラミミ",
+      "sim": 0,
+      "period": [
+       1,
+       3
+      ]
+     }
+    ]
+   ],
+   "weights_per_line": null,
+   "results": [
+    [
+     {
+      "surface": "カ",
+      "pronunciation": "カ",
+      "kana": "カ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "カ",
+      "period": [
+       0,
+       1
+      ],
+      "original_surface": "カ"
+     },
+     {
+      "id": "lock-1",
+      "surface": "ソラミミ",
+      "pronunciation": "ソラ",
+      "kana": "ソラ",
+      "original": "ソラミミ",
+      "sim": 0,
+      "period": [
+       1,
+       3
+      ],
+      "original_surface": "キク"
+     },
+     {
+      "surface": "ケ",
+      "pronunciation": "ケ",
+      "kana": "ケ",
+      "original": "",
+      "filler": true,
+      "sim": 1000000,
+      "score": 1000000,
+      "originalkana": "ケ",
+      "period": [
+       3,
+       4
+      ],
+      "original_surface": "ケ"
+     }
+    ]
+   ]
+  },
+  {
+   "name": "locks_with_word",
+   "wordlist_csv": "id,original,surface,pronunciation\n1,カキ,カキ,カキ",
+   "tokens_list": [
+    [
+     {
+      "surface_form": "カキクケ",
+      "basic_form": "カキクケ",
+      "reading": "カキクケ",
+      "pronunciation": "カキクケ",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "phrase": 0
+     }
+    ]
+   ],
+   "parameter": {
+    "SAME_PHRASE_BREAK_REWARD": 0,
+    "MID_PHRASE_BREAK_PENALTY": 20,
+    "WORD_NUMBER_PENALTY": 20,
+    "VARIATION_COST": 16,
+    "DUPLICATE": false
+   },
+   "locks_per_line": [
+    [
+     {
+      "id": "lock-1",
+      "surface": "ソラミミ",
+      "pronunciation": "ソラ",
+      "kana": "ソラ",
+      "original": "ソラミミ",
+      "sim": 0,
+      "period": [
+       2,
+       4
+      ]
+     }
+    ]
+   ],
+   "weights_per_line": null,
+   "results": [
+    [
+     {
+      "surface": "カキ",
+      "pronunciation": [
+       "カ",
+       "キ"
+      ],
+      "kana": "カキ",
+      "id": "1",
+      "original": "カキ",
+      "vcost": 0,
+      "sim": 117.916527,
+      "originalkana": "カキ",
+      "score": 137.916527,
+      "period": [
+       0,
+       2
+      ],
+      "original_surface": "カキ"
+     },
+     {
+      "id": "lock-1",
+      "surface": "ソラミミ",
+      "pronunciation": "ソラ",
+      "kana": "ソラ",
+      "original": "ソラミミ",
+      "sim": 0,
+      "period": [
+       2,
+       4
+      ],
+      "original_surface": "クケ"
+     }
+    ]
+   ]
+  }
+ ]
+}

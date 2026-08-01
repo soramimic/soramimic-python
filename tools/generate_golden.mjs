@@ -254,7 +254,7 @@ const genWordlistCsv = [
 ].join("\n");
 const genDb = wordList.parseTidy(genWordlistCsv, "");
 
-function runGenerate(tokensList, db, parameter, locksPerLine = null) {
+function runGenerate(tokensList, db, parameter, locksPerLine = null, weightsPerLine = null) {
   return new Promise((resolve) => {
     soramimiMaker.generateFromTokens(
       JSON.parse(JSON.stringify(tokensList)),
@@ -262,7 +262,8 @@ function runGenerate(tokensList, db, parameter, locksPerLine = null) {
       parameter,
       null,
       (results) => resolve(results),
-      locksPerLine
+      locksPerLine,
+      weightsPerLine
     );
   });
 }
@@ -449,6 +450,58 @@ writeFileSync(
     null,
     1
   )
+);
+
+// ---------------------------------------------------------------
+// 9. filler(万能候補) #128
+// 単語が足りない/どの単語も合わない区間があっても行が空にならず、
+// 埋まらない区間だけ元歌詞のかなが1ユニットずつ残ることを実装間で突き合わせる。
+// 単語リストは行ごとに変えたいのでケース単位に持たせる(1〜2語の極小リスト)。
+const fillerParam = {
+  SAME_PHRASE_BREAK_REWARD: 0, MID_PHRASE_BREAK_PENALTY: 20,
+  WORD_NUMBER_PENALTY: 20, VARIATION_COST: 16, DUPLICATE: false,
+};
+// 1トークン=1行のカナ(読み確定済み)。formatTokensListを通してから生成に渡す
+const fillerLines = (kanaList) =>
+  textAnalyzer.formatTokensList(
+    kanaList.map((kana) => [tk(kana, "名詞", "一般", kana, kana)])
+  );
+const fillerCases = [];
+for (const [name, csvRows, kanaList, parameter, locksPerLine, weightsPerLine] of [
+  // 2語しかないリストで3行 → 3行目は在庫切れで全部filler
+  ["shortage", ["1,カキ,カキ,カキ", "2,キカ,キカ,キカ"], ["カキ", "カキ", "カキ"], fillerParam, null, null],
+  // 合う区間は実単語・残りは1ユニットずつfiller
+  ["mixed", ["1,カキ,カキ,カキ"], ["カキクケ"], fillerParam, null, null],
+  // どの単語も長さが合わない → 行全体がfiller(同じかなが何度でも出る)
+  ["no_match", ["1,クケコ,クケコ,クケコ"], ["カキ", "カキ", "カカ"], fillerParam, null, null],
+  // 重み・ペナルティ最大でもfillerは実単語に勝たない
+  ["weighted", ["1,カキ,カキ,カキ"], ["カキクケ"],
+    { ...fillerParam, WORD_NUMBER_PENALTY: 60, MID_PHRASE_BREAK_PENALTY: 160 },
+    null, [[4, 0, 0, 0]]],
+  // 固定単語との共存(隙間がfillerで埋まる / 隙間に実単語が置けるならそちら)
+  ["locks", ["1,カキ,カキ,カキ"], ["カキクケ"], fillerParam,
+    [[{ id: "lock-1", surface: "ソラミミ", pronunciation: "ソラ", kana: "ソラ",
+        original: "ソラミミ", sim: 0, period: [1, 3] }]], null],
+  ["locks_with_word", ["1,カキ,カキ,カキ"], ["カキクケ"], fillerParam,
+    [[{ id: "lock-1", surface: "ソラミミ", pronunciation: "ソラ", kana: "ソラ",
+        original: "ソラミミ", sim: 0, period: [2, 4] }]], null],
+]) {
+  const wordlistCsv = ["id,original,surface,pronunciation", ...csvRows].join("\n");
+  const db = wordList.parseTidy(wordlistCsv, "");
+  const tokensList = fillerLines(kanaList);
+  const results = await runGenerate(
+    tokensList, db, parameter,
+    locksPerLine ? JSON.parse(JSON.stringify(locksPerLine)) : null,
+    weightsPerLine
+  );
+  fillerCases.push({
+    name, wordlist_csv: wordlistCsv, tokens_list: tokensList, parameter,
+    locks_per_line: locksPerLine, weights_per_line: weightsPerLine, results,
+  });
+}
+writeFileSync(
+  join(OUTDIR, "filler.json"),
+  JSON.stringify({ filler_cost: soramimiMaker.FILLER_COST, cases: fillerCases }, null, 1)
 );
 
 console.log = origLog;

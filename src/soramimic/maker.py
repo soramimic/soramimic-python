@@ -23,6 +23,23 @@ Word = dict[str, Any]
 
 INF = float("inf")
 
+# DPに常設する「filler(万能候補)」1ユニットあたりのコスト(#128)。
+# fillerは「その位置の元歌詞のかなをそのまま置く」仮想語で、単語が足りない・
+# どの単語も合わない区間を必ず埋められる。実単語が1つでも置けるなら必ず負ける
+# だけの巨大な有限値にすることで、単語が足りている行の結果は従来と完全に同一になる。
+#
+# 値の根拠(実単語の1行あたり総コストの上限):
+#   ・ユニット距離: 類似度行列の最大値は80(母音×2r・子音×2(1-r)にスケールしても
+#     ベースの (子音+母音)/2 の最大は80のまま)。重みは行内で平均1に正規化される
+#     =総和がユニット数なので、行全体でも 80×ユニット数 を超えない
+#   ・VARIATION_COST(既定16・UI最大18)×変種操作数
+#   ・WORD_NUMBER_PENALTY(UI最大60)・MID_PHRASE_BREAK_PENALTY(UI最大160)×単語数
+# 1行は最長40文字(本体 convert.js の MAX_PHRASE_LENGTH)なのでユニット数も40程度で、
+# 上記を全部足しても1万台に収まる。1e6 はその2桁上なので「fillerを1つ減らせる
+# 経路は必ず安い」が成り立ち、かつ 1e6×ユニット数 でも倍精度の整数精度(2^53)には
+# 遠く届かないため、スコアの丸めで順序が壊れることもない
+FILLER_COST = 1e6
+
 logger = logging.getLogger(__name__)
 
 _SIM_KEY = itemgetter("sim")
@@ -209,6 +226,9 @@ def normalize_unit_weights(
 
 class SoramimiMaker:
     """soramimic.js の SoramimiMaker(kanaSimilarity, textAnalyzer)。"""
+
+    # JS側が maker.FILLER_COST を公開しているのに合わせる(テスト・呼び出し側の検証用)
+    FILLER_COST = FILLER_COST
 
     def __init__(self, kana_similarity: KanaSimilarity, text_analyzer: TextAnalyzer) -> None:
         self.kana_similarity = kana_similarity
@@ -444,8 +464,9 @@ class SoramimiMaker:
         words_num = param["WORD_NUMBER_PENALTY"]
 
         # 固定単語は使用済み扱い(可変リスト)
+        # fillerはidを持たないので使用済みには含めない(固定されたfillerが来ても同じ)
         if locks and len(locks) > 0:
-            used = list(used_words) + [v["id"] for v in locks]
+            used = list(used_words) + [v["id"] for v in locks if not v.get("filler")]
         else:
             used = used_words
 
@@ -470,9 +491,6 @@ class SoramimiMaker:
             results: list[list[Any]] = []
             for i in range(s, t):
                 subtarget = target[i:t]
-                similar_words = get_similar_word_func(subtarget, i, t)
-                if similar_words is None:
-                    continue
 
                 r = dp(s, i)
                 if not r:
@@ -481,7 +499,37 @@ class SoramimiMaker:
                 if prev_score == INF:
                     continue
                 prev_words = r[1]
-                current_used = [v["id"] for v in prev_words]
+
+                # 1ユニット区間には必ず filler(万能候補)を選択肢として置く(#128)。
+                # コストが巨大なので実単語が置ける区間では必ず負け、単語が尽きた/
+                # どの単語も合わない区間だけ「元歌詞のまま」で残る。これで
+                # 「候補が無い→行が丸ごと空」という経路が無くなる。
+                # 文節の報酬・ペナルティは単語の切れ目に対する調整なので未変換の
+                # fillerには掛けない(経路の優劣がfillerの個数だけで決まるようにする)
+                if t - i == 1:
+                    kana = subtarget[0]
+                    filler_words = list(prev_words)
+                    filler_words.append(
+                        {
+                            "surface": kana,
+                            "pronunciation": kana,
+                            "kana": kana,
+                            "original": "",
+                            "filler": True,
+                            "sim": FILLER_COST,
+                            "score": FILLER_COST,
+                            "originalkana": kana,
+                            "period": [i, t],
+                        }
+                    )
+                    results.append([prev_score + FILLER_COST + words_num, filler_words])
+
+                similar_words = get_similar_word_func(subtarget, i, t)
+                if similar_words is None:
+                    continue
+
+                # fillerはidを持たない仮想語なので、使用済み(単語重複なし)の判定からは外す
+                current_used = [v["id"] for v in prev_words if not v.get("filler")]
 
                 new_word: Word | None
                 if len(similar_words) == 0:
@@ -532,8 +580,11 @@ class SoramimiMaker:
                 if r and r[0] != INF:
                     score += r[0]
                     words = words + r[1]
+                    # 後続区間で同じ単語を再利用しないよう使用済みに追記
+                    # (fillerはidを持たないので数えない)
                     for w in r[1]:
-                        used.append(w["id"])
+                        if not w.get("filler"):
+                            used.append(w["id"])
 
             for lw in sorted_locks:
                 ls, le = lw["period"]
@@ -671,7 +722,8 @@ class SoramimiMaker:
 
             if update_func:
                 update_func(result, i, tokenized_phrases)
-            used_words = used_words + [v["id"] for v in result]
+            # fillerは実単語ではないので使用済み(単語重複なし)には数えない
+            used_words = used_words + [v["id"] for v in result if not v.get("filler")]
             results.append(result)
 
         if end_func:
