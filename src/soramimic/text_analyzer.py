@@ -14,6 +14,7 @@ from .character import Character, TokenFormatter
 from .english import English
 from .kana_to_syllable import (
     KanaToSyllable,
+    Variation,
     absorb_small_kana,
     hira_to_kata,
     remove_unnatural_kana_pattern,
@@ -292,10 +293,10 @@ class TextAnalyzer:
 
     def syllable_to_variation(
         self, syllables: list[str] | None, max_units: int | None = None
-    ) -> list[list[str]]:
+    ) -> list[Variation]:
         return self.k2s.get_variation(syllables, max_units)
 
-    def yomi_to_variation(self, yomi: str, max_units: int | None = None) -> list[list[str]]:
+    def yomi_to_variation(self, yomi: str, max_units: int | None = None) -> list[Variation]:
         """読みを発音バリエーション(ユニット列)の一覧にする。
 
         max_units は KanaToSyllable.get_variation と同じ意味(既定 None = 無制限)。

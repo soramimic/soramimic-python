@@ -53,3 +53,8 @@ testpaths = ["tests"]
 [tool.mypy]
 python_version = "3.10"
 strict = false
+
+# mecab extra の依存。型スタブを持たず、未導入の環境でも型検査を通したいので無視する
+[[tool.mypy.overrides]]
+module = ["fugashi", "ipadic"]
+ignore_missing_imports = true

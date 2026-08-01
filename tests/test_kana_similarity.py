@@ -30,8 +30,9 @@ def test_set_and_get(default_data: dict[str, Any]) -> None:
     )
     assert ks.get() is None
     ks.set_kana_similarity({})
-    assert ks.get() is not None
-    assert "カ" in ks.get()
+    table = ks.get()
+    assert table is not None
+    assert "カ" in table
 
 
 def test_reward_multiplier_changes_value(default_data: dict[str, Any]) -> None:

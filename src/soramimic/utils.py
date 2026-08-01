@@ -98,11 +98,12 @@ def to_katakana(str_val: str) -> None:
     return None
 
 
-def format_text(str_val: str) -> str | None:
-    """utils.js の formatText を忠実に移植(toKatakana が None を返す点も含む)。"""
-    str_val = remove_sign(str_val)
-    str_val = to_katakana(str_val)  # type: ignore[assignment]
-    return str_val
+def format_text(str_val: str) -> None:
+    """utils.js の formatText を忠実に移植(toKatakana が None を返す点も含む)。
+
+    JS版は toKatakana の戻り値(undefined)をそのまま返すため、常に None を返す。
+    """
+    to_katakana(remove_sign(str_val))
 
 
 def argsort(array: list[Any]) -> list[int]:
