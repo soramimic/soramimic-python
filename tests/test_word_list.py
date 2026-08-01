@@ -70,13 +70,47 @@ def test_parse_plain(pieces: dict[str, Any]) -> None:
     # id は「有効行のインデックス」。ネコ=0, イヌ=1, カード=2, タイヨウ=3
     b2 = _ids(db[2])
     assert ("ネコ", "0") in b2
-    assert ("ワンコ", "1") in b2  # イヌ行の異表記、original=イヌ
+    assert ("イヌ", "1") in b2  # 2列目以降は読みなので表示は見出し語のまま
     assert ("カード", "2") in b2
-    wanko = next(w for w in db[2] if w["surface"] == "ワンコ")
+    wanko = next(w for w in db[2] if w["kana"] == "ワンコ")
+    assert wanko["surface"] == "イヌ"
     assert wanko["original"] == "イヌ"
     assert wanko["pronunciation"] == ["ワー", "コ"]
     # 行内コメントとゼロ幅スペースが除去される
     assert all("#" not in w["surface"] for bucket in db.values() for w in bucket)
+
+
+def test_parse_plain_surface_is_headword(pieces: dict[str, Any]) -> None:
+    """「見出し語,読み1,読み2…」の1列目が original 兼 surface(soramimic#38)。
+
+    読みは2列目以降で、マッチング(kana/pronunciation)にだけ使う。同じ見出し語に
+    読みが複数あるときは、同一id・同一surfaceの行が読みの数だけ並ぶ。
+    """
+    wl = pieces["word_list"]
+    db = wl.parse_plain("東京タワー,トーキョータワー\nイヌ,ワンコ,ドッグ")
+    words = [w for bucket in db.values() for w in bucket]
+
+    # 読み(トーキョータワー等)が表示表記として出てこない
+    assert {w["surface"] for w in words} == {"東京タワー", "イヌ"}
+
+    tower = [w for w in words if w["original"] == "東京タワー"]
+    assert tower and all(w["surface"] == "東京タワー" for w in tower)
+    assert {w["kana"] for w in tower} == {"トーキョータワー"}
+
+    # 読みが2つある行は id/surface が同じまま kana だけ分かれる
+    inu = [w for w in words if w["original"] == "イヌ"]
+    assert {w["id"] for w in inu} == {"1"}
+    assert {w["kana"] for w in inu} == {"ワンコ", "ドッグ"}
+
+
+def test_parse_plain_matches_equivalent_tidy_csv(pieces: dict[str, Any]) -> None:
+    """plain は「同一id・同一surfaceで読みだけ違う行が並ぶ tidy CSV」と等価。"""
+    wl = pieces["word_list"]
+    plain_db = wl.parse_plain("イヌ,ワンコ,ドッグ")
+    tidy_db = wl.parse_tidy(
+        "id,original,surface,pronunciation\n0,イヌ,イヌ,ワンコ\n0,イヌ,イヌ,ドッグ", ""
+    )
+    assert plain_db == tidy_db
 
 
 def test_parser_eval() -> None:

@@ -184,7 +184,11 @@ class WordList:
         return self._load_database_csv_text(text, query_str, max_units)
 
     def parse_plain(self, text: str, max_units: int | None = None) -> ResultDB:
-        """1行1語のプレーンテキストから単語DBを作る(max_units は parse_tidy と同じ)。"""
+        """1行1語のプレーンテキストから単語DBを作る(max_units は parse_tidy と同じ)。
+
+        1行は「見出し語,読み1,読み2…」。1列目が original 兼 surface(表示に使う表記)で、
+        2列目以降は読み(マッチングにだけ使う)。読みを省くと見出し語自身が読みになる。
+        """
         return self._load_database_text(text, max_units)
 
     def _load_database_csv_text(
@@ -281,9 +285,12 @@ class WordList:
             if len(v) == 1:
                 csvlines.append([str(i), v[0], v[0], v[0]])
             else:
+                # 「見出し語,読み1,読み2…」: 1列目は original 兼 surface(表示に使う表記)、
+                # 2列目以降は読み(マッチングにだけ使う)。読みが複数あるときは
+                # 同じid・同じsurfaceの行が読みの数だけ並ぶ(tidy CSVと同じ構造)
                 for j in range(1, len(v)):
                     if v[j]:
-                        csvlines.append([str(i), v[0], v[j], v[j]])
+                        csvlines.append([str(i), v[0], v[0], v[j]])
 
         db = header + csvlines
         return "\n".join(",".join(row) for row in db)
