@@ -17,7 +17,7 @@ from typing import Any
 from .kana_similarity import KanaSimilarity, SimTable
 from .kana_to_syllable import Variation
 from .text_analyzer import TextAnalyzer
-from .utils import find_min, js_object_key_order
+from .utils import find_min, is_array_index, js_object_key_order
 
 Token = dict[str, Any]
 Word = dict[str, Any]
@@ -45,6 +45,10 @@ logger = logging.getLogger(__name__)
 
 _SIM_KEY = itemgetter("sim")
 _MISSING = object()
+
+# 重複なし生成のexact検索で一度に列和を計算する発音entry数。全バケツぶんの
+# pronunciation列・score列を保持せず、この固定上限の作業領域だけを使う。
+_STREAMING_CHUNK_SIZE = 256
 
 
 def _column_sums(rvs: list[list[float]], icols: list[list[int]], n: int) -> list[float]:
@@ -88,6 +92,28 @@ def _column_sums(rvs: list[list[float]], icols: list[list[int]], n: int) -> list
             r0, c0 = rvs[i], icols[i]
             totals = [x + r0[a] for x, a in zip(totals, c0, strict=True)]
             i += 1
+    return totals
+
+
+def _weighted_column_sums(
+    rvs: list[list[float]],
+    icols: list[list[int]],
+    weights: Sequence[float],
+    unknown: int,
+    n: int,
+) -> list[float]:
+    """重み付き距離を固定長entry chunkへ足し込む（作業領域はO(chunk)）。
+
+    全target変種ぶんのscaled kana rowを保持すると、変種の多い長区間でメモリ削減を
+    相殺する。位置ごとに掛けながら足し、未知unitは重み0でも``INF``にすることで
+    ``_ld``と同じ値・演算順を保つ。
+    """
+    totals = [0.0] * n
+    for row, column, weight in zip(rvs, icols, weights, strict=True):
+        totals = [
+            INF if unit_id == unknown else total + row[unit_id] * weight
+            for total, unit_id in zip(totals, column, strict=True)
+        ]
     return totals
 
 
@@ -448,10 +474,155 @@ class SoramimiMaker:
         words2.sort(key=_SIM_KEY)
         return words2
 
+    def _get_best_available_word(
+        self,
+        index: _WordlistIndex,
+        target: list[str],
+        kana_dist: SimTable,
+        excluded_ids: set[Any],
+        variation_cost: float = 0,
+        unit_weights: Sequence[float] | None = None,
+    ) -> list[Word]:
+        """使用可能なexact最良1 IDだけを、発音entryの1走査で返す。
+
+        ``DUPLICATE=False`` の生成DP専用。通常の ``_get_similar_word`` が作る
+        ID別候補Map・全件score列・順位配列と、呼び出し側のGS候補cacheを作らない。
+        一方で既存のユニットID索引と ``_column_sums`` は固定長チャンク単位で使い、
+        Pythonループを発音の各位置へ戻さずに作業メモリだけを上限固定する。
+
+        ID間の同点はJSの通常Objectキー列挙順、同一ID・同scoreの発音entryは
+        後勝ち。禁止IDも非数値IDの初出順位には参加するため、順位採番は除外判定より
+        前に行う。
+        """
+        tmp = self.text_analyzer.syllable_to_variation(target)
+        candidates: dict[int, list[tuple[Variation, list[float] | None]]] = {}
+        for c in tmp:
+            clen = len(c)
+            if clen in index.wordlist:
+                candidates.setdefault(clen, []).append((c, self._expand_weights(c, unit_weights)))
+
+        best: Word | None = None
+        best_id_key: str | None = None
+        best_score = INF
+        best_order: tuple[int, int] | None = None
+        non_index_orders: dict[str, int] = {}
+
+        unit_ids = index._unit_ids
+        unknown = len(unit_ids)
+
+        # ターゲット変種ごとの距離行はentry chunkに依存しない。重み付きの行も
+        # queryごとに一度だけ作り、chunkを進めるたびの再計算を避ける。
+        prepared_candidates: dict[
+            int,
+            list[
+                tuple[
+                    Variation,
+                    list[float] | None,
+                    Any,
+                    list[list[float]] | None,
+                    bool,
+                ]
+            ],
+        ] = {}
+        for key, variations in candidates.items():
+            prepared = []
+            for c, cwts in variations:
+                rows: list[list[float]] = []
+                for unit in c:
+                    row = index.row_values(unit)
+                    if row is None:
+                        break
+                    rows.append(row)
+                unusable = len(rows) < len(c) and c[len(rows)] not in kana_dist
+                prepared_rows: list[list[float]] | None = None
+                if len(rows) == len(c):
+                    prepared_rows = rows
+                prepared.append((c, cwts, getattr(c, "vcost", 0) or 0, prepared_rows, unusable))
+            prepared_candidates[key] = prepared
+
+        def score_chunk(key: int, words: list[Word], orders: list[tuple[int, int]]) -> None:
+            nonlocal best, best_id_key, best_score, best_order
+            n = len(words)
+            prons = [w["pronunciation"] for w in words]
+            vcosts = [w.get("vcost") or 0 for w in words]
+            icols: list[list[int]] | None = None
+            if all(len(p) == key for p in prons):
+                get_unit_id = unit_ids.get
+                icols = [[get_unit_id(p[i], unknown) for p in prons] for i in range(key)]
+
+            sims: list[float] | None = None
+            for c, cwts, cvcost, rows, unusable in prepared_candidates[key]:
+                totals: list[float] | None = None
+                if icols is not None and rows is not None:
+                    totals = (
+                        _column_sums(rows, icols, n)
+                        if cwts is None
+                        else _weighted_column_sums(rows, icols, cwts, unknown, n)
+                    )
+                elif unusable:
+                    continue
+
+                if totals is None:
+                    totals = [self._ld(c, p, kana_dist, cwts) for p in prons]
+
+                if variation_cost:
+                    cur = [
+                        total + (cvcost + vcost) * variation_cost
+                        for total, vcost in zip(totals, vcosts, strict=True)
+                    ]
+                else:
+                    cur = totals
+                if sims is None:
+                    sims = cur
+                else:
+                    sims = [
+                        score if score < old else old for score, old in zip(cur, sims, strict=True)
+                    ]
+
+            if sims is None:
+                sims = [INF] * n
+
+            for word, order, sim in zip(words, orders, sims, strict=True):
+                id_key = str(word["id"])
+                earlier = best_order is None or order < best_order
+                same_id = best_id_key == id_key
+                if sim < best_score or (sim == best_score and (earlier or same_id)):
+                    best = word
+                    best_id_key = id_key
+                    best_score = sim
+                    best_order = order
+
+        bucket_keys = js_object_key_order([str(k) for k in candidates])
+        for bucket_key in bucket_keys:
+            key = int(bucket_key)
+            chunk: list[Word] = []
+            chunk_orders: list[tuple[int, int]] = []
+            for word in index.wordlist[key]:
+                id_key = str(word["id"])
+                if is_array_index(id_key):
+                    order = (0, int(id_key))
+                else:
+                    if id_key not in non_index_orders:
+                        non_index_orders[id_key] = len(non_index_orders)
+                    order = (1, non_index_orders[id_key])
+
+                if word["id"] in excluded_ids:
+                    continue
+                chunk.append(word)
+                chunk_orders.append(order)
+                if len(chunk) == _STREAMING_CHUNK_SIZE:
+                    score_chunk(key, chunk, chunk_orders)
+                    chunk = []
+                    chunk_orders = []
+            if chunk:
+                score_chunk(key, chunk, chunk_orders)
+
+        return [] if best is None else [{**best, "sim": best_score}]
+
     def _convert(
         self,
         tokens: list[Token],
-        get_similar_word_func: Callable[[list[str], int, int], list[Word]],
+        get_similar_word_func: Callable[[list[str], int, int, set[Any] | None], list[Word]],
         used_words: list[str],
         param: dict[str, Any],
         locks: list[Word] | None = None,
@@ -527,12 +698,13 @@ class SoramimiMaker:
                     )
                     results.append([prev_score + FILLER_COST + words_num, filler_words])
 
-                similar_words = get_similar_word_func(subtarget, i, t)
+                # 重複なしでは、全曲の使用済みID・全lock・現在のDP prefixを
+                # exact検索より前に除外し、使用可能な最良1 IDだけを求める。
+                current_used = [v["id"] for v in prev_words if not v.get("filler")]
+                excluded_ids = None if is_duplicate else set(used + current_used)
+                similar_words = get_similar_word_func(subtarget, i, t, excluded_ids)
                 if similar_words is None:
                     continue
-
-                # fillerはidを持たない仮想語なので、使用済み(単語重複なし)の判定からは外す
-                current_used = [v["id"] for v in prev_words if not v.get("filler")]
 
                 new_word: Word | None
                 if len(similar_words) == 0:
@@ -665,9 +837,22 @@ class SoramimiMaker:
 
         def make_gs(
             line_weights: list[float] | None,
-        ) -> Callable[[list[str], int, int], list[Word]]:
-            def gs(target: list[str], start: int, end: int) -> list[Word]:
+        ) -> Callable[[list[str], int, int, set[Any] | None], list[Word]]:
+            def gs(
+                target: list[str], start: int, end: int, excluded_ids: set[Any] | None
+            ) -> list[Word]:
                 seg_weights = line_weights[start:end] if line_weights is not None else None
+                # 空setも重複なし生成を表す。禁止IDがまだ無い最初の区間でも
+                # 全候補経路やGS cacheへ落とさない。
+                if excluded_ids is not None:
+                    return self._get_best_available_word(
+                        index,
+                        target,
+                        kana_dist,
+                        excluded_ids,
+                        param["VARIATION_COST"],
+                        seg_weights,
+                    )
                 joined_target = "".join(target)
                 if seg_weights is None:
                     key = joined_target
