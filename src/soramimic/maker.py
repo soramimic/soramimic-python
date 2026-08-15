@@ -510,8 +510,8 @@ class SoramimiMaker:
         unit_ids = index._unit_ids
         unknown = len(unit_ids)
 
-        # ターゲット変種ごとの距離行はentry chunkに依存しない。重み付きの行も
-        # queryごとに一度だけ作り、chunkを進めるたびの再計算を避ける。
+        # ターゲット変種ごとの距離行参照はentry chunkに依存しないのでqueryごとに
+        # 一度だけ集める。重みはscaled rowを保持せず、chunkの列和で掛ける。
         prepared_candidates: dict[
             int,
             list[
@@ -833,7 +833,9 @@ class SoramimiMaker:
         kana_dist = self.kana_similarity.get_kana_similarity(param)
         # 単語DBの前処理は行・区間をまたいで使い回す(kana_dist はこの generate 中不変)
         index = _WordlistIndex(wordlist, kana_dist)
-        gsmemo: dict[str, list[Word]] = {}
+        # 重複なしでは禁止集合がDP prefixごとに変わるため、空のdictすら作らない。
+        # 重複可だけが従来どおり全行共有のGS候補cacheを使う。
+        gsmemo: dict[str, list[Word]] | None = {} if param["DUPLICATE"] else None
 
         def make_gs(
             line_weights: list[float] | None,
@@ -862,6 +864,7 @@ class SoramimiMaker:
                     # 方式と違い、同じ重みパターンが繰り返す行ではキャッシュが効く。
                     # (重みが全行で相異なる場合はヒット率が落ちるが、正しさを優先する)
                     key = joined_target + "\x00" + ",".join(repr(w) for w in seg_weights)
+                assert gsmemo is not None
                 if key in gsmemo:
                     return gsmemo[key]
                 result = self._get_similar_word(

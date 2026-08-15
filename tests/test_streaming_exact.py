@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import pytest
@@ -254,3 +255,22 @@ def test_streaming_result_matches_full_exact_with_weights_and_variations(
     )
 
     assert actual == expected
+
+
+def test_unknown_pronunciation_stays_infinite_with_zero_weight(pieces: dict[str, Any]) -> None:
+    """未知unitに重み0を掛けてもINF*0のnanへ崩さない（_ldと同じINF）。"""
+    maker = pieces["maker"]
+    db = {
+        2: [
+            {
+                **_entry(pieces, "0", "未知読み", "カカ"),
+                "pronunciation": ["未知", "カ"],
+            }
+        ]
+    }
+    kana_dist = pieces["kana_similarity"].get_kana_similarity(PARAM)
+    result = maker._get_best_available_word(
+        _WordlistIndex(db, kana_dist), ["カ", "カ"], kana_dist, set(), unit_weights=[0.0, 2.0]
+    )
+
+    assert math.isinf(result[0]["sim"])
