@@ -17,6 +17,7 @@ from .kana_to_syllable import (
     Variation,
     absorb_small_kana,
     hira_to_kata,
+    normalize_kana_reading,
     remove_unnatural_kana_pattern,
 )
 from .ruby import parse_ruby
@@ -62,6 +63,8 @@ class TextAnalyzer:
         english: English,
         tokenize_sentenses: Callable[[list[str]], list[list[Token]]],
         get_yomi: Callable[..., Any],
+        *,
+        preserve_reading_positions: bool = False,
     ) -> None:
         self.character = character
         self.k2s = kana_to_syllable
@@ -70,6 +73,7 @@ class TextAnalyzer:
         self.get_yomi = get_yomi
         self.tf = TokenFormatter()
         self.kanji = character.kanji
+        self.preserve_reading_positions = preserve_reading_positions
 
     def tokenize_together(self, texts: list[str]) -> list[list[Token]]:
         ap = self.english.apostrophe
@@ -180,16 +184,17 @@ class TextAnalyzer:
                 if _KATAKANA_ONLY_RE.match(s):
                     token["pronunciation"] = s
 
-            tokens[:] = self.tf.format(tokens)
+            tokens[:] = self.tf.format(
+                tokens, preserve_reading_positions=self.preserve_reading_positions
+            )
             for token in tokens:
                 if token["pronunciation"] == "*":
                     token["pos"] = "記号"
 
-            self._absorb_small_kana_in_tokens(tokens)
+            self._normalize_kana_in_tokens(tokens)
         return tokens_list
 
-    @staticmethod
-    def _absorb_small_kana_in_tokens(tokens: list[Token]) -> None:
+    def _normalize_kana_in_tokens(self, tokens: list[Token]) -> None:
         """読みに残った小書きカナ(「ハァ」「ウッセェ」など)を大文字に吸収する。
 
         単独の小書きはどの単語の発音にも現れない(単語リスト側は format_kana で
@@ -201,7 +206,11 @@ class TextAnalyzer:
         joined = "".join(
             t["pronunciation"] if isinstance(t.get("pronunciation"), str) else "" for t in tokens
         )
-        absorbed = absorb_small_kana(joined)
+        absorbed = (
+            normalize_kana_reading(joined)
+            if self.preserve_reading_positions
+            else absorb_small_kana(joined)
+        )
         if absorbed == joined:
             return
         pos = 0
@@ -223,7 +232,11 @@ class TextAnalyzer:
         text = re.sub(r"[a-zA-Z']+", lambda m: self.english.to_kana(m.group(0)), text)
         text = hira_to_kata(text)
         text = remove_sign(text)
-        text = remove_unnatural_kana_pattern(text)
+        text = (
+            normalize_kana_reading(text)
+            if self.preserve_reading_positions
+            else remove_unnatural_kana_pattern(text)
+        )
         return text
 
     @staticmethod
