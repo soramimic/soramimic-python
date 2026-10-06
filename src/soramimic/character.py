@@ -146,13 +146,41 @@ class TokenFormatter:
             token["phrase"] = cnt
         return tokens
 
-    def format(self, tokens: list[Token]) -> list[Token]:
+    @classmethod
+    def _concat_kana_continuations(cls, tokens: list[Token]) -> list[Token]:
+        """Join onto the retained token, including runs of standalone small kana/bars."""
+        out: list[Token] = []
+        for token in tokens:
+            if (
+                out
+                and not cls._is_ruby(token)
+                and not cls._is_ruby(out[-1])
+                and (
+                    token["surface_form"] == "ー"
+                    or (
+                        cls._is_small_kana_start(token["surface_form"])
+                        and cls._is_kana_end(out[-1]["surface_form"])
+                    )
+                )
+            ):
+                out[-1]["surface_form"] += token["surface_form"]
+                out[-1]["pronunciation"] += token["pronunciation"]
+            else:
+                out.append(token)
+        return out
+
+    def format(
+        self, tokens: list[Token], *, preserve_reading_positions: bool = False
+    ) -> list[Token]:
         tokens = self._remove_sign_pronunciation(tokens)
         tokens = self._remove_unknown_sahen(tokens)
         tokens = self._set_number_pronunciation(tokens)
         tokens = self._set_kana_pronunciation(tokens)
-        tokens = self._concat_single_bar(tokens)
-        tokens = self._concat_small_kana(tokens)
+        if preserve_reading_positions:
+            tokens = self._concat_kana_continuations(tokens)
+        else:
+            tokens = self._concat_single_bar(tokens)
+            tokens = self._concat_small_kana(tokens)
         tokens = self._set_phrase_index(tokens)
         return tokens
 

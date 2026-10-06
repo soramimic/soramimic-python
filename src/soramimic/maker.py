@@ -626,6 +626,7 @@ class SoramimiMaker:
         used_words: list[str],
         param: dict[str, Any],
         locks: list[Word] | None = None,
+        word_boundaries: list[int] | None = None,
     ) -> list[Any] | None:
         # get_similar_word_func は (部分ターゲット, 開始index, 終了index) を受け取る。
         # 位置別重みを引くために区間を渡す必要があるため、JS原典の1引数から拡張した。
@@ -643,6 +644,9 @@ class SoramimiMaker:
             used = used_words
 
         target = [v["pronunciation"] for v in tokens]
+        boundaries = list(range(len(target) + 1)) if word_boundaries is None else word_boundaries
+        allowed_boundaries = set(boundaries)
+        previous_boundary = dict(zip(boundaries[1:], boundaries[:-1], strict=True))
         phrase_breaks: list[int] = []
         for j, v in enumerate(tokens):
             if j == 0:
@@ -664,6 +668,8 @@ class SoramimiMaker:
 
             results: list[list[Any]] = []
             for i in range(s, t):
+                if i not in allowed_boundaries:
+                    continue
                 subtarget = target[i:t]
 
                 r = dp(s, i)
@@ -680,8 +686,9 @@ class SoramimiMaker:
                 # 「候補が無い→行が丸ごと空」という経路が無くなる。
                 # 文節の報酬・ペナルティは単語の切れ目に対する調整なので未変換の
                 # fillerには掛けない(経路の優劣がfillerの個数だけで決まるようにする)
-                if t - i == 1:
-                    kana = subtarget[0]
+                if previous_boundary.get(t) == i:
+                    kana = "".join(subtarget)
+                    filler_cost = FILLER_COST * (t - i)
                     filler_words = list(prev_words)
                     filler_words.append(
                         {
@@ -690,13 +697,13 @@ class SoramimiMaker:
                             "kana": kana,
                             "original": "",
                             "filler": True,
-                            "sim": FILLER_COST,
-                            "score": FILLER_COST,
+                            "sim": filler_cost,
+                            "score": filler_cost,
                             "originalkana": kana,
                             "period": [i, t],
                         }
                     )
-                    results.append([prev_score + FILLER_COST + words_num, filler_words])
+                    results.append([prev_score + filler_cost + words_num, filler_words])
 
                 # 重複なしでは、全曲の使用済みID・全lock・現在のDP prefixを
                 # exact検索より前に除外し、使用可能な最良1 IDだけを求める。
@@ -797,6 +804,7 @@ class SoramimiMaker:
         update_func: Callable[..., Any] | None = None,
         end_func: Callable[..., Any] | None = None,
         weights_per_line: list[list[float]] | None = None,
+        word_boundaries_per_line: list[list[int]] | None = None,
     ) -> list[list[Word]]:
         tokens_list = self.text_analyzer.tokenize_together(phrases)
         return self.generate_from_tokens(
@@ -806,6 +814,7 @@ class SoramimiMaker:
             update_func,
             end_func,
             weights_per_line=weights_per_line,
+            word_boundaries_per_line=word_boundaries_per_line,
         )
 
     def generate_from_tokens(
@@ -817,6 +826,7 @@ class SoramimiMaker:
         end_func: Callable[..., Any] | None = None,
         locks_per_line: list[list[Word]] | None = None,
         weights_per_line: list[list[float]] | None = None,
+        word_boundaries_per_line: list[list[int]] | None = None,
     ) -> list[list[Word]]:
         """行ごとに近い単語列を割り当てる。
 
@@ -827,6 +837,11 @@ class SoramimiMaker:
             正規化され(normalize_unit_weights)、ターゲット側ユニットの一致距離
             だけに掛かる。VARIATION_COST・WORD_NUMBER_PENALTY・文節境界項は
             無重みのまま(重み付けの対象を広げるかは将来の拡張)。
+
+        word_boundaries_per_line: Allowed word start/end unit indices for each line,
+            including 0 and the line's unit count in strictly increasing order.
+            Protected spans remain indivisible even when only filler is available.
+            None preserves the default unconstrained segmentation.
         """
         param = self._assign_default_parameter(parameter)
 
@@ -877,6 +892,26 @@ class SoramimiMaker:
 
         tokenized_phrases = [self.text_analyzer.get_yomi_and_phrase_break(v) for v in tokens_list]
 
+        if word_boundaries_per_line is not None:
+            if len(word_boundaries_per_line) != len(tokenized_phrases):
+                raise ValueError("word_boundaries_per_line must have one entry per line")
+            for i, (tokens, boundaries) in enumerate(
+                zip(tokenized_phrases, word_boundaries_per_line, strict=True)
+            ):
+                if (
+                    not boundaries
+                    or any(type(value) is not int for value in boundaries)
+                    or boundaries[0] != 0
+                    or boundaries[-1] != len(tokens)
+                    or any(a >= b for a, b in zip(boundaries[:-1], boundaries[1:], strict=True))
+                ):
+                    raise ValueError(f"line {i}: invalid word boundaries")
+                if locks_per_line and any(
+                    start not in boundaries or end not in boundaries
+                    for start, end in (word["period"] for word in locks_per_line[i])
+                ):
+                    raise ValueError(f"line {i}: locked word splits a protected span")
+
         if weights_per_line is not None and len(weights_per_line) != len(tokenized_phrases):
             logger.warning(
                 "weights_per_line length mismatch: got %d, expected %d lines",
@@ -901,6 +936,7 @@ class SoramimiMaker:
                 used_words,
                 param,
                 locks_per_line[i] if locks_per_line else None,
+                word_boundaries_per_line[i] if word_boundaries_per_line is not None else None,
             )
 
             result: list[Word] = []

@@ -43,13 +43,22 @@ def create_soramimic(
     kana2phonon: dict[str, Any],
     tokenize_sentenses: Callable[[list[str]], list[list[Token]]],
     get_yomi: Callable[..., Any],
+    *,
+    preserve_reading_positions: bool = False,
 ) -> Soramimic:
     """index.js の createSoramimic 相当。データとトークナイザを注入して組み上げる。"""
     kanji = Kanji(kanji_dict)
     character = Character(kanji)
     k2s = KanaToSyllable()
     english = English(english_dict, roman_tree)
-    text_analyzer = TextAnalyzer(character, k2s, english, tokenize_sentenses, get_yomi)
+    text_analyzer = TextAnalyzer(
+        character,
+        k2s,
+        english,
+        tokenize_sentenses,
+        get_yomi,
+        preserve_reading_positions=preserve_reading_positions,
+    )
     kana_similarity = KanaSimilarity(vowel_similarity, consonant_similarity, kana2phonon)
     soramimi_maker = SoramimiMaker(kana_similarity, text_analyzer)
     word_list = WordList(text_analyzer)

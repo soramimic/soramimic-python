@@ -341,6 +341,31 @@ def absorb_small_kana(text: str) -> str:
     return "".join(chars)
 
 
+def normalize_kana_reading(text: str) -> str:
+    """Normalize kana for matching without deleting or inserting characters.
+
+    Source lyrics and dictionary readings can share this policy when character
+    offsets identify timed notes. Unsupported small-kana pairs are opened using
+    the syllable splitter's rules; repeated long marks become explicit vowels.
+    The caller retains the original spelling and its mora identities separately.
+    """
+    text = absorb_small_kana(hira_to_kata(text))
+    out: list[str] = []
+    previous = ""
+    vowel = ""
+    for char in text:
+        if char == "ー":
+            out.append(vowel if previous == "ー" and vowel else char)
+        else:
+            candidate = char_to_vowel(char)
+            if char == "ヲ":
+                candidate = "オ"
+            vowel = candidate if candidate in "アイウエオ" else ""
+            out.append(char)
+        previous = char
+    return "".join(out)
+
+
 def remove_bar_and_sokuon_reputation(text: str) -> str:
     """ーとッの不自然な並びを削除する(removeBarAndSokuonReputation)。"""
     text = re.sub(r"ー+", "ー", text)  # ーの連続を1文字にする

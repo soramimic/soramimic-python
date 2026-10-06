@@ -4,6 +4,7 @@ soramimic/soramimic の frontend/src/lib (JS) と挙動互換の Python 移植�
 """
 
 from .factory import Soramimic, create_soramimic, load_default_data, scale_similarity
+from .kana_to_syllable import normalize_kana_reading
 from .ruby import has_ruby, parse_ruby
 from .samples import SAMPLE_WORDLISTS, load_sample_wordlist
 from .tokenizer import Tokenizer
@@ -18,6 +19,7 @@ __all__ = [
     "has_ruby",
     "load_default_data",
     "load_sample_wordlist",
+    "normalize_kana_reading",
     "parse_ruby",
     "scale_similarity",
     "__version__",
