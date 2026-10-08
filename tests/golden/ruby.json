@@ -965,6 +965,20 @@
       "phrase": 0
      },
      {
+      "surface_form": "ー",
+      "basic_form": "ー",
+      "reading": "ー",
+      "pronunciation": "ー",
+      "pos": "名詞",
+      "pos_detail_1": "一般",
+      "pos_detail_2": "*",
+      "pos_detail_3": "*",
+      "conjugated_form": "*",
+      "conjugated_type": "*",
+      "word_position": 2,
+      "phrase": 1
+     },
+     {
       "surface_form": "ば",
       "basic_form": "ば",
       "reading": "バ",
@@ -976,7 +990,7 @@
       "conjugated_form": "*",
       "conjugated_type": "*",
       "word_position": 3,
-      "phrase": 1
+      "phrase": 2
      },
      {
       "surface_form": "す",
@@ -990,7 +1004,7 @@
       "conjugated_form": "*",
       "conjugated_type": "*",
       "word_position": 4,
-      "phrase": 2
+      "phrase": 3
      }
     ]
    ]

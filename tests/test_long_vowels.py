@@ -64,3 +64,54 @@ def test_cross_token_long_vowel_can_select_a_real_word(app: Any, duplicate: bool
     assert words[0]["period"] == [0, 2]
     assert words[0]["original_surface"] == "コーラ"
     assert not words[0].get("filler")
+
+
+@pytest.mark.parametrize(
+    ("parts", "expected"),
+    [
+        (["カー", "ー"], ["カー", "ア"]),
+        (["カ", "ー", "ー"], ["カー", "ア"]),
+        (["カ", "ーー"], ["カー", "ア"]),
+        (["ドーーー"], ["ドー", "オオ"]),
+        (["シェ", "ー", "ーラ"], ["シェー", "エ", "ラ"]),
+        (["ヲー", "ー"], ["ヲー", "オ"]),
+    ],
+)
+@pytest.mark.parametrize("formatted", [False, True])
+def test_repeated_long_vowels_keep_characters(
+    app: Any, parts: list[str], expected: list[str], formatted: bool
+) -> None:
+    prepared = tokens(parts)
+    if formatted:
+        prepared = app.text_analyzer.format_tokens_list([prepared])[0]
+    assert "".join(t["surface_form"] for t in prepared) == "".join(parts)
+    units = app.text_analyzer.get_yomi_and_phrase_break(prepared)
+    assert [u["pronunciation"] for u in units] == expected
+    assert "".join(u["surface_form"] for u in units) == "".join(parts)
+    assert len("".join(u["pronunciation"] for u in units)) == len("".join(parts))
+
+
+def test_repeated_long_vowel_positions(app: Any) -> None:
+    prepared = app.text_analyzer.format_tokens_list([tokens(["カ", "ー", "ー"])])[0]
+    units = app.text_analyzer.get_yomi_and_phrase_break(prepared)
+    assert [u["char_index"] for u in units] == [0, 2]
+    leading = app.text_analyzer.format_tokens_list([tokens(["ー"])])[0]
+    assert "".join(t["surface_form"] for t in leading) == "ー"
+
+
+@pytest.mark.parametrize("spelling", ["カーー", "カーア"])
+@pytest.mark.parametrize("duplicate", [False, True])
+def test_repeated_long_vowel_can_select_a_real_word(
+    app: Any, spelling: str, duplicate: bool
+) -> None:
+    assert app.text_analyzer.format_kana(spelling) == "カーア"
+    db = app.word_list.parse_tidy(
+        f"id,original,surface,pronunciation\n1,長音語,長音語,{spelling}", ""
+    )
+    prepared = app.text_analyzer.format_tokens_list([tokens(["カ", "ー", "ー"])])
+    words = app.soramimi_maker.generate_from_tokens(prepared, db, {"DUPLICATE": duplicate})[0]
+    assert len(words) == 1
+    assert words[0]["surface"] == "長音語"
+    assert words[0]["period"] == [0, 2]
+    assert words[0]["original_surface"] == "カーー"
+    assert not words[0].get("filler")
