@@ -277,11 +277,17 @@ class TextAnalyzer:
         subword_kana: list[str] = []
         last_subword = -1
         for token in tokens:
-            if token["subword"] != last_subword:
+            # A leading long-vowel mark belongs to the preceding syllable even
+            # when the tokenizer puts it in a new subword (コ / ーラ).
+            # Join before splitting so the normal syllable rules still apply,
+            # and retain every character for the surface/reading position map.
+            if token["subword"] != last_subword and (
+                token["pronunciation"] != "ー" or not subword_kana
+            ):
                 subword_kana.append(token["pronunciation"])
-                last_subword = token["subword"]
             else:
                 subword_kana[len(subword_kana) - 1] += token["pronunciation"]
+            last_subword = token["subword"]
 
         mora: list[Any] = []
         for v in subword_kana:
