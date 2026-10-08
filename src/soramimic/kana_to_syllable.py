@@ -350,6 +350,11 @@ def normalize_kana_reading(text: str) -> str:
     The caller retains the original spelling and its mora identities separately.
     """
     text = absorb_small_kana(hira_to_kata(text))
+    return expand_repeated_long_vowels(text)
+
+
+def expand_repeated_long_vowels(text: str) -> str:
+    """Open repeated marks into known vowels without changing character positions."""
     out: list[str] = []
     previous = ""
     vowel = ""

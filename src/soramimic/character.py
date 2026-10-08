@@ -102,13 +102,19 @@ class TokenFormatter:
 
     @classmethod
     def _concat_single_bar(cls, tokens: list[Token]) -> list[Token]:
-        for i in range(1, len(tokens)):
-            if cls._is_ruby(tokens[i]) or cls._is_ruby(tokens[i - 1]):
-                continue
-            if tokens[i]["surface_form"] == "ー":
-                tokens[i - 1]["surface_form"] += "ー"
-                tokens[i - 1]["pronunciation"] += "ー"
-        return [token for token in tokens if cls._is_ruby(token) or token["surface_form"] != "ー"]
+        out: list[Token] = []
+        for token in tokens:
+            if (
+                out
+                and not cls._is_ruby(token)
+                and not cls._is_ruby(out[-1])
+                and token["surface_form"] == "ー"
+            ):
+                out[-1]["surface_form"] += "ー"
+                out[-1]["pronunciation"] += "ー"
+            else:
+                out.append(token)
+        return out
 
     @classmethod
     def _set_number_pronunciation(cls, tokens: list[Token]) -> list[Token]:

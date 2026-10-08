@@ -16,6 +16,7 @@ from .kana_to_syllable import (
     KanaToSyllable,
     Variation,
     absorb_small_kana,
+    expand_repeated_long_vowels,
     hira_to_kata,
     normalize_kana_reading,
     remove_unnatural_kana_pattern,
@@ -235,7 +236,7 @@ class TextAnalyzer:
         text = (
             normalize_kana_reading(text)
             if self.preserve_reading_positions
-            else remove_unnatural_kana_pattern(text)
+            else remove_unnatural_kana_pattern(expand_repeated_long_vowels(text))
         )
         return text
 
@@ -289,6 +290,10 @@ class TextAnalyzer:
                 subword_kana[len(subword_kana) - 1] += token["pronunciation"]
             last_subword = token["subword"]
 
+        # Normalize after character alignment and cross-token joining so both
+        # manual/source positions and the full long-vowel context survive.
+        subword_kana = [expand_repeated_long_vowels(v) for v in subword_kana]
+        normalized_pronunciation = "".join(subword_kana)
         mora: list[Any] = []
         for v in subword_kana:
             sp = self.k2s.split(v)
@@ -303,6 +308,7 @@ class TextAnalyzer:
 
         for i in range(len(mora_index)):
             tokens[i]["mora"] = mora_index[i]
+            tokens[i]["pronunciation"] = normalized_pronunciation[i]
 
         tokens = self._concat_mora(tokens)
         return tokens
