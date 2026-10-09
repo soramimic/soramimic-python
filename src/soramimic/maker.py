@@ -16,6 +16,7 @@ from typing import Any
 
 from .kana_similarity import KanaSimilarity, SimTable
 from .kana_to_syllable import Variation
+from .pronunciation_search import PronunciationSearch
 from .text_analyzer import TextAnalyzer
 from .utils import find_min, is_array_index, js_object_key_order
 
@@ -377,7 +378,14 @@ class SoramimiMaker:
             ``min(Infinity, sim)`` は sim なので、丸ごと読み飛ばしてよい。
         """
         wordlist = index.wordlist
-        tmp = self.text_analyzer.syllable_to_variation(target)
+        search = PronunciationSearch(target, wordlist)
+        if not search.lengths:
+            return []
+        if search.compact:
+            return self._get_compact_similar_words(
+                index, search, kana_dist, variation_cost, unit_weights
+            )
+        tmp = self.text_analyzer.syllable_to_variation(target, max(search.lengths))
         candidates: dict[int, list[Variation]] = {}
         # 変種ごとの展開済み重み(単語ループの内側で毎回引き直さないよう先に作る)
         candidate_weights: dict[int, list[list[float] | None]] = {}
@@ -474,6 +482,42 @@ class SoramimiMaker:
         words2.sort(key=_SIM_KEY)
         return words2
 
+    def _get_compact_similar_words(
+        self,
+        index: _WordlistIndex,
+        search: PronunciationSearch,
+        kana_dist: SimTable,
+        variation_cost: float,
+        unit_weights: Sequence[float] | None,
+    ) -> list[Word]:
+        """Keep only the best pronunciation per ID without expanding target paths."""
+        best_sim: dict[str, float] = {}
+        best_word: dict[str, Word] = {}
+        bucket_keys = tuple(str(key) for key in search.lengths)
+        for key in search.lengths:
+            for word in index.wordlist[key]:
+                sim = (
+                    search.score(
+                        word["pronunciation"],
+                        kana_dist,
+                        variation_cost,
+                        word.get("vcost") or 0,
+                        unit_weights,
+                    )
+                    if len(word["pronunciation"]) == key
+                    else INF
+                )
+                wid = word["id"]
+                previous = best_sim.get(wid)
+                if previous is not None and sim > previous:
+                    continue
+                best_sim[wid] = sim
+                best_word[wid] = word
+        order = index.id_order(bucket_keys, best_sim.keys())
+        result = [{**best_word[wid], "sim": best_sim[wid]} for wid in order]
+        result.sort(key=_SIM_KEY)
+        return result
+
     def _get_best_available_word(
         self,
         index: _WordlistIndex,
@@ -494,7 +538,14 @@ class SoramimiMaker:
         後勝ち。禁止IDも非数値IDの初出順位には参加するため、順位採番は除外判定より
         前に行う。
         """
-        tmp = self.text_analyzer.syllable_to_variation(target)
+        search = PronunciationSearch(target, index.wordlist)
+        if not search.lengths:
+            return []
+        tmp = (
+            []
+            if search.compact
+            else self.text_analyzer.syllable_to_variation(target, max(search.lengths))
+        )
         candidates: dict[int, list[tuple[Variation, list[float] | None]]] = {}
         for c in tmp:
             clen = len(c)
@@ -540,8 +591,20 @@ class SoramimiMaker:
                 prepared.append((c, cwts, getattr(c, "vcost", 0) or 0, prepared_rows, unusable))
             prepared_candidates[key] = prepared
 
-        def score_chunk(key: int, words: list[Word], orders: list[tuple[int, int]]) -> None:
-            nonlocal best, best_id_key, best_score, best_order
+        def distance_chunk(key: int, words: list[Word]) -> list[float]:
+            if search.compact:
+                return [
+                    search.score(
+                        word["pronunciation"],
+                        kana_dist,
+                        variation_cost,
+                        word.get("vcost") or 0,
+                        unit_weights,
+                    )
+                    if len(word["pronunciation"]) == key
+                    else INF
+                    for word in words
+                ]
             n = len(words)
             prons = [w["pronunciation"] for w in words]
             vcosts = [w.get("vcost") or 0 for w in words]
@@ -581,7 +644,11 @@ class SoramimiMaker:
 
             if sims is None:
                 sims = [INF] * n
+            return sims
 
+        def score_chunk(key: int, words: list[Word], orders: list[tuple[int, int]]) -> None:
+            nonlocal best, best_id_key, best_score, best_order
+            sims = distance_chunk(key, words)
             for word, order, sim in zip(words, orders, sims, strict=True):
                 id_key = str(word["id"])
                 earlier = best_order is None or order < best_order
@@ -592,9 +659,7 @@ class SoramimiMaker:
                     best_score = sim
                     best_order = order
 
-        bucket_keys = js_object_key_order([str(k) for k in candidates])
-        for bucket_key in bucket_keys:
-            key = int(bucket_key)
+        for key in search.lengths:
             chunk: list[Word] = []
             chunk_orders: list[tuple[int, int]] = []
             for word in index.wordlist[key]:
