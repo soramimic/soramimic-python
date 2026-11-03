@@ -8,6 +8,7 @@ from .kana_to_syllable import normalize_kana_reading
 from .ruby import has_ruby, parse_ruby
 from .samples import SAMPLE_WORDLISTS, load_sample_wordlist
 from .tokenizer import Tokenizer
+from .wordlist_reading import resolve_wordlist_reading
 
 __version__ = "0.2.0"
 
@@ -22,5 +23,6 @@ __all__ = [
     "normalize_kana_reading",
     "parse_ruby",
     "scale_similarity",
+    "resolve_wordlist_reading",
     "__version__",
 ]

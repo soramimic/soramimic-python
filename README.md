@@ -40,6 +40,26 @@ for line in results:
 自前の単語リストを使う場合は同形式のCSVテキストを `parse_tidy` に渡します。
 同梱サンプルは権利上の配慮から事実データ(国名・生物名・駅名)のみです。
 
+### 単語リスト全件の読みを推定する
+
+`create_soramimic` の `wordlist_reading` に、文字列からカナ読みを返す関数を指定できます。
+例えば、別途導入した `soramimic_yomi.get_yomi` を渡すと、漢字の有無にかかわらず全件を
+処理します。`pronunciation` があればその値、空欄・`NA` なら `surface` を渡します。
+表記・IDは変更しません。全角英数字は関数を呼ぶ前に半角へ統一し、結果をカタカナに
+揃えて検証します。空の読みやカナ以外の文字が残る場合は、行番号・単語・読みを含む
+`ValueError` を返します。引数を省略すると従来の読み処理を使います。
+
+```python
+from soramimic_yomi import get_yomi
+
+app = create_soramimic(
+    **load_default_data(),
+    tokenize_sentenses=tok.tokenize,
+    get_yomi=tok.get_yomi,
+    wordlist_reading=get_yomi,
+)
+```
+
 トークナイザは差し替え可能です( `soramimic.tokenizer.Tokenizer` プロトコル参照)。
 kuromoji.js 互換のトークン dict( `surface_form` / `pronunciation` / `pos` …、未知語は `"*"` )を返せば何でも使えます。
 事前にトークナイズ済みの入力からは `generate_from_tokens()` で生成できます(固定区間 `locks` による部分再生成にも対応)。
