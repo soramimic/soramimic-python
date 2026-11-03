@@ -15,6 +15,8 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from .wordlist_reading import ReadingResolver, resolve_wordlist_reading
+
 Word = dict[str, Any]
 ResultDB = dict[int, list[Word]]
 
@@ -166,8 +168,11 @@ class Parser:
 class WordList:
     """wordList.js の WordList(textAnalyzer)。"""
 
-    def __init__(self, text_analyzer: Any) -> None:
+    def __init__(
+        self, text_analyzer: Any, *, reading_resolver: ReadingResolver | None = None
+    ) -> None:
         self.text_analyzer = text_analyzer
+        self.reading_resolver = reading_resolver
         self._word_list: dict[str, ResultDB] = {}
 
     def parse_tidy(self, text: str, query_str: str = "", max_units: int | None = None) -> ResultDB:
@@ -192,7 +197,11 @@ class WordList:
         return self._load_database_text(text, max_units)
 
     def _load_database_csv_text(
-        self, text: str, query_str: str, max_units: int | None = None
+        self,
+        text: str,
+        query_str: str,
+        max_units: int | None = None,
+        source_lines: list[int] | None = None,
     ) -> ResultDB:
         # \s は改行にもマッチするため、行末カンマ(最終列が空)の行があると
         # 次の行を飲み込んでしまう。空白正規化は行内の空白(スペース/タブ)のみ
@@ -203,6 +212,10 @@ class WordList:
         df: list[list[str]] = []
         for i in range(1, len(lines)):
             df.append(lines[i].split(","))
+        line_numbers = {
+            id(row): source_lines[i] if source_lines is not None else i + 2
+            for i, row in enumerate(df)
+        }
 
         parser = Parser()
         if query_str:
@@ -226,12 +239,24 @@ class WordList:
                 p = v[h2i["surface"]]
             pronunciations.append(p)
 
-        # kanjiがあるときだけtokenizerにかける
+        if self.reading_resolver is not None:
+            resolved: list[str] = []
+            for row, pronunciation in zip(filtered_df, pronunciations, strict=True):
+                try:
+                    resolved.append(resolve_wordlist_reading(pronunciation, self.reading_resolver))
+                except ValueError as exc:
+                    surface = row[h2i["surface"]]
+                    raise ValueError(
+                        f"単語リストの{line_numbers[id(row)]}行目「{surface}」: {exc}"
+                    ) from exc
+            pronunciations = resolved
+
+        # Provider-less callers retain the JS-compatible reading path.
         kanji_pronunciation: list[str] = []
         kanji_pronunciation_id: list[int] = []
         for i in range(len(pronunciations)):
             p = pronunciations[i]
-            if re.search(r"[一-龠]", p):
+            if self.reading_resolver is None and re.search(r"[一-龠]", p):
                 kanji_pronunciation.append(p)
                 kanji_pronunciation_id.append(i)
 
@@ -272,18 +297,24 @@ class WordList:
 
     @staticmethod
     def _plain_to_csv(text: str) -> str:
+        rows, _ = WordList._plain_rows(text)
+        return "\n".join(",".join(row) for row in rows)
+
+    @staticmethod
+    def _plain_rows(text: str) -> tuple[list[list[str]], list[int]]:
         header = [["id", "original", "surface", "pronunciation"]]
         raw_lines = re.split(r"\r\n|\n", text)
         stripped = [re.sub(r"#.*$", "", v) for v in raw_lines]  # #以降をコメントアウト
         stripped = [v.replace("​", "") for v in stripped]  # ゼロ幅スペース除去
         split_lines = [v.split(",") for v in stripped]  # カンマでスプリット
-        lines = [v for v in split_lines if len(v) > 0 and v[0]]  # 不正な行を削除
+        lines = [(n, v) for n, v in enumerate(split_lines, 1) if len(v) > 0 and v[0]]
 
         csvlines: list[list[str]] = []
-        for i in range(len(lines)):
-            v = lines[i]
+        source_lines: list[int] = []
+        for i, (line_no, v) in enumerate(lines):
             if len(v) == 1:
                 csvlines.append([str(i), v[0], v[0], v[0]])
+                source_lines.append(line_no)
             else:
                 # 「見出し語,読み1,読み2…」: 1列目は original 兼 surface(表示に使う表記)、
                 # 2列目以降は読み(マッチングにだけ使う)。読みが複数あるときは
@@ -291,10 +322,11 @@ class WordList:
                 for j in range(1, len(v)):
                     if v[j]:
                         csvlines.append([str(i), v[0], v[0], v[j]])
+                        source_lines.append(line_no)
 
-        db = header + csvlines
-        return "\n".join(",".join(row) for row in db)
+        return header + csvlines, source_lines
 
     def _load_database_text(self, text: str, max_units: int | None = None) -> ResultDB:
-        csvtext = self._plain_to_csv(text)
-        return self._load_database_csv_text(csvtext, "", max_units)
+        rows, source_lines = self._plain_rows(text)
+        csvtext = "\n".join(",".join(row) for row in rows)
+        return self._load_database_csv_text(csvtext, "", max_units, source_lines)

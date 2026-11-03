@@ -20,6 +20,7 @@ from .kana_to_syllable import KanaToSyllable
 from .maker import SoramimiMaker
 from .text_analyzer import TextAnalyzer
 from .word_list import WordList
+from .wordlist_reading import ReadingResolver
 
 Token = dict[str, Any]
 
@@ -45,6 +46,7 @@ def create_soramimic(
     get_yomi: Callable[..., Any],
     *,
     preserve_reading_positions: bool = False,
+    wordlist_reading: ReadingResolver | None = None,
 ) -> Soramimic:
     """index.js の createSoramimic 相当。データとトークナイザを注入して組み上げる。"""
     kanji = Kanji(kanji_dict)
@@ -61,7 +63,7 @@ def create_soramimic(
     )
     kana_similarity = KanaSimilarity(vowel_similarity, consonant_similarity, kana2phonon)
     soramimi_maker = SoramimiMaker(kana_similarity, text_analyzer)
-    word_list = WordList(text_analyzer)
+    word_list = WordList(text_analyzer, reading_resolver=wordlist_reading)
     return Soramimic(
         text_analyzer=text_analyzer,
         kana_similarity=kana_similarity,
