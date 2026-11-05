@@ -71,3 +71,49 @@ def test_reading_boundary_normalizes_before_and_after_provider() -> None:
 
     assert resolve_wordlist_reading(" メカＸ ", read) == "メカエックス"
     assert seen == ["メカX"]
+
+
+@pytest.mark.parametrize("style", ["tidy", "plain", "no-column"])
+def test_supplied_readings_use_normalizer_only(default_data: dict[str, Any], style: str) -> None:
+    inferred: list[str] = []
+    supplied: list[str] = []
+
+    def infer(text: str) -> str:
+        inferred.append(text)
+        return "ワナイ"
+
+    def normalize(text: str) -> str:
+        supplied.append(text)
+        return "ハナイ"
+
+    app = create_soramimic(
+        **default_data,
+        tokenize_sentenses=single_token_tokenizer,
+        get_yomi=fixed_yomi,
+        wordlist_reading=infer,
+        wordlist_pronunciation=normalize,
+    )
+    if style == "tidy":
+        db = app.word_list.parse_tidy(
+            "id,original,surface,pronunciation\n"
+            "1,はない,はない,\n2,はない,はない,はない\n3,はない,はない,NA"
+        )
+    elif style == "plain":
+        db = app.word_list.parse_plain("はない\nはない,はない\nはない,NA")
+    else:
+        db = app.word_list.parse_tidy("id,original,surface\n1,はない,はない\n2,はない,はない")
+
+    assert inferred == ["はない", "はない"]
+    assert supplied == ([] if style == "no-column" else ["はない"])
+    assert {word["kana"] for bucket in db.values() for word in bucket} == (
+        {"ワナイ"} if style == "no-column" else {"ワナイ", "ハナイ"}
+    )
+
+
+def test_supplied_reading_error_retains_source_context(pieces: dict[str, Any]) -> None:
+    def reject(text: str) -> str:
+        raise ValueError(f"指定した読み「{text}」をカナで指定してください")
+
+    wl = WordList(pieces["text_analyzer"], pronunciation_normalizer=reject)
+    with pytest.raises(ValueError, match="4行目「対象」.*メカX"):
+        wl.parse_plain("# comment\n\nネコ\n対象,メカＸ")

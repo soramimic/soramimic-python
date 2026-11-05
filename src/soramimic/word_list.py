@@ -169,10 +169,15 @@ class WordList:
     """wordList.js の WordList(textAnalyzer)。"""
 
     def __init__(
-        self, text_analyzer: Any, *, reading_resolver: ReadingResolver | None = None
+        self,
+        text_analyzer: Any,
+        *,
+        reading_resolver: ReadingResolver | None = None,
+        pronunciation_normalizer: ReadingResolver | None = None,
     ) -> None:
         self.text_analyzer = text_analyzer
         self.reading_resolver = reading_resolver
+        self.pronunciation_normalizer = pronunciation_normalizer
         self._word_list: dict[str, ResultDB] = {}
 
     def parse_tidy(self, text: str, query_str: str = "", max_units: int | None = None) -> ResultDB:
@@ -233,17 +238,30 @@ class WordList:
         # 行が header より短いケースはJSも落ちるので救済しない
         p_idx = h2i.get("pronunciation")
         pronunciations: list[str] = []
+        explicit: list[bool] = []
         for v in filtered_df:
             p = v[p_idx] if p_idx is not None and p_idx < len(v) else None
-            if (not p) or p == "NA" or p == "na":
-                p = v[h2i["surface"]]
-            pronunciations.append(p)
+            supplied = bool(p) and p not in ("NA", "na")
+            explicit.append(supplied)
+            pronunciations.append(p if supplied and p is not None else v[h2i["surface"]])
 
-        if self.reading_resolver is not None:
+        resolved_indices: set[int] = set()
+        if self.reading_resolver is not None or self.pronunciation_normalizer is not None:
             resolved: list[str] = []
-            for row, pronunciation in zip(filtered_df, pronunciations, strict=True):
+            for index, (row, pronunciation) in enumerate(
+                zip(filtered_df, pronunciations, strict=True)
+            ):
+                resolver = (
+                    self.pronunciation_normalizer
+                    if explicit[index] and self.pronunciation_normalizer is not None
+                    else self.reading_resolver
+                )
+                if resolver is None:
+                    resolved.append(pronunciation)
+                    continue
                 try:
-                    resolved.append(resolve_wordlist_reading(pronunciation, self.reading_resolver))
+                    resolved.append(resolve_wordlist_reading(pronunciation, resolver))
+                    resolved_indices.add(index)
                 except ValueError as exc:
                     surface = row[h2i["surface"]]
                     raise ValueError(
@@ -256,7 +274,7 @@ class WordList:
         kanji_pronunciation_id: list[int] = []
         for i in range(len(pronunciations)):
             p = pronunciations[i]
-            if self.reading_resolver is None and re.search(r"[一-龠]", p):
+            if i not in resolved_indices and re.search(r"[一-龠]", p):
                 kanji_pronunciation.append(p)
                 kanji_pronunciation_id.append(i)
 
@@ -313,7 +331,8 @@ class WordList:
         source_lines: list[int] = []
         for i, (line_no, v) in enumerate(lines):
             if len(v) == 1:
-                csvlines.append([str(i), v[0], v[0], v[0]])
+                # Preserve omission until the inference provider is selected.
+                csvlines.append([str(i), v[0], v[0], ""])
                 source_lines.append(line_no)
             else:
                 # 「見出し語,読み1,読み2…」: 1列目は original 兼 surface(表示に使う表記)、
