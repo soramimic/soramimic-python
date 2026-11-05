@@ -49,14 +49,22 @@ for line in results:
 揃えて検証します。空の読みやカナ以外の文字が残る場合は、行番号・単語・読みを含む
 `ValueError` を返します。引数を省略すると従来の読み処理を使います。
 
+指定済みの読みを再推定しない場合は、`wordlist_pronunciation` に正規化・検証用の
+関数を渡します。この関数には指定された `pronunciation` だけを渡し、読みが空欄・
+`NA` の行や読み列のないリストでは `wordlist_reading` を使います。
+`soramimic_yomi.normalize_reading` を指定すると、「はない」は「ハナイ」を保持し、
+英数字などを含む指定読みは修正が必要な入力として報告します。
+この引数を省略した利用側の動作は変わりません。
+
 ```python
-from soramimic_yomi import get_yomi
+from soramimic_yomi import get_yomi, normalize_reading
 
 app = create_soramimic(
     **load_default_data(),
     tokenize_sentenses=tok.tokenize,
     get_yomi=tok.get_yomi,
     wordlist_reading=get_yomi,
+    wordlist_pronunciation=normalize_reading,
 )
 ```
 
