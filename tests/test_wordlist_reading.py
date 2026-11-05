@@ -117,3 +117,9 @@ def test_supplied_reading_error_retains_source_context(pieces: dict[str, Any]) -
     wl = WordList(pieces["text_analyzer"], pronunciation_normalizer=reject)
     with pytest.raises(ValueError, match="4行目「対象」.*メカX"):
         wl.parse_plain("# comment\n\nネコ\n対象,メカＸ")
+
+
+def test_supplied_compound_kana_survives_matching_format(pieces: dict[str, Any]) -> None:
+    wl = WordList(pieces["text_analyzer"], pronunciation_normalizer=lambda text: "フュージョン")
+    db = wl.parse_plain("名前,フュージョン")
+    assert {word["kana"] for bucket in db.values() for word in bucket} == {"フュージョン"}

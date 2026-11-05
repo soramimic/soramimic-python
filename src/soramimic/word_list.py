@@ -246,6 +246,7 @@ class WordList:
             pronunciations.append(p if supplied and p is not None else v[h2i["surface"]])
 
         resolved_indices: set[int] = set()
+        supplied_readings: dict[int, str] = {}
         if self.reading_resolver is not None or self.pronunciation_normalizer is not None:
             resolved: list[str] = []
             for index, (row, pronunciation) in enumerate(
@@ -262,6 +263,8 @@ class WordList:
                 try:
                     resolved.append(resolve_wordlist_reading(pronunciation, resolver))
                     resolved_indices.add(index)
+                    if explicit[index] and self.pronunciation_normalizer is not None:
+                        supplied_readings[index] = resolved[-1]
                 except ValueError as exc:
                     surface = row[h2i["surface"]]
                     raise ValueError(
@@ -305,7 +308,9 @@ class WordList:
                     {
                         "surface": obj["surface"],
                         "pronunciation": p,
-                        "kana": obj["pronunciation"],
+                        # Matching may open compound kana for its own splitter.
+                        # Keep the caller's normalized pronunciation for singing.
+                        "kana": supplied_readings.get(i, obj["pronunciation"]),
                         "id": obj["id"],
                         "original": obj["original"],
                         "vcost": getattr(p, "vcost", 0) or 0,  # 単語側の変種コスト(#105)
